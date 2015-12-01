@@ -1,0 +1,9 @@
+/data/
+/x64/
+/MultiViewStitch/Match/
+/MultiViewStitch/x64/
+*.opensdf
+*.sdf
+*.obj
+*.rar
+*.jpg

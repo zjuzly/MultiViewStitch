@@ -1,0 +1,273 @@
+#ifndef PLY_OBJ_H
+#define PLY_OBJ_H
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <Eigen/Dense>
+
+static void WritePly(
+	const std::string filename,
+	const std::vector<Eigen::Vector3f> points,
+	const std::vector<Eigen::Vector3i> colors,
+	bool binary = false
+	){
+	int npoints = (int)points.size();
+	std::ofstream ofs(filename.c_str(), std::ofstream::out);
+	ofs<<"ply"<<std::endl;
+	ofs<<"format ascii 1.0"<<std::endl;
+	ofs<<"element face 0"<<std::endl;
+	ofs<<"property list uchar int vertex_indices"<<std::endl;
+	ofs<<"element vertex "<<npoints<<std::endl;
+	ofs<<"property float x"<<std::endl;
+	ofs<<"property float y"<<std::endl;
+	ofs<<"property float z"<<std::endl;
+	ofs<<"property uchar diffuse_red"<<std::endl;
+	ofs<<"property uchar diffuse_green"<<std::endl;
+	ofs<<"property uchar diffuse_blue"<<std::endl;
+	ofs<<"end_header"<<std::endl;
+	for(int i = 0; i < npoints; ++i){
+		const Eigen::Vector3f &p = points[i];
+		const Eigen::Vector3i &rgb = colors[i];
+		ofs<<p[0]<<" "<<p[1]<<" "<<p[2]<<" "
+			<<rgb[0]<<" "<<rgb[1]<<" "<<rgb[2]<<std::endl;
+	}
+	ofs.close();
+}
+
+static void WritePly(
+	const std::string filename,
+	const std::vector<Eigen::Vector3f> points,
+	const std::vector<Eigen::Vector3f> normals = std::vector<Eigen::Vector3f>(),
+	const std::vector<int> faces = std::vector<int>()
+	){
+	int m_nPoints = (int)points.size();
+	int m_nNorms = (int)normals.size();
+	int m_nFaces = (int)faces.size();
+	int polygon_type = 3;
+	std::ofstream ofs(filename, std::ofstream::out);
+	ofs<<"ply"<<std::endl;
+	ofs<<"format ascii 1.0"<<std::endl;
+	ofs<<"element vertex "<<m_nPoints<<std::endl;
+	ofs<<"property float x"<<std::endl;
+	ofs<<"property float y"<<std::endl;
+	ofs<<"property float z"<<std::endl;
+	if(m_nNorms != 0){
+		ofs<<"property float nx"<<std::endl;
+		ofs<<"property float ny"<<std::endl;
+		ofs<<"property float nz"<<std::endl;
+	}
+	ofs<<"element face "<<m_nFaces / 3<<std::endl;
+	ofs<<"property list uchar int vertex_indices"<<std::endl;
+	ofs<<"end_header"<<std::endl;
+	if(m_nNorms != 0){
+		for(int i = 0; i < m_nPoints; ++i){
+			const Eigen::Vector3f &p = points[i];
+			const Eigen::Vector3f &norm = normals[i];
+			ofs<<p[0]<<" "<<p[1]<<" "<<p[2]<<" "
+				<<norm[0]<<" "<<norm[1]<<" "<<norm[2]<<std::endl;
+		}
+	}else{
+		for(int i = 0; i < m_nPoints; ++i){
+			const Eigen::Vector3f &p = points[i];
+			ofs<<p[0]<<" "<<p[1]<<" "<<p[2]<<std::endl;
+		}
+	}
+	for(int i = 0; i < m_nFaces; i += 3){
+		ofs<<polygon_type<<" "<<faces[i]<<" "<<faces[i + 1]<<" "<<faces[i + 2]<<std::endl;
+	}
+	ofs.flush();
+	ofs.close();
+}
+
+static void ReadPly(
+	const std::string filename,
+	std::vector<Eigen::Vector3f> &points,
+	std::vector<Eigen::Vector3f> &normals = std::vector<Eigen::Vector3f>(),
+	std::vector<int> &faces = std::vector<int>()
+	){
+
+	//std::cout << filename << std::endl;
+	points.clear();
+	normals.clear();
+	faces.clear();
+	std::ifstream ifs;
+	ifs.open(filename.c_str(), std::ifstream::in);
+	if(!ifs.is_open()){
+		std::cerr << "ERROR: Open File " << filename << " Failed! Please check if it exists" << std::endl;
+		exit(-1);
+	}
+	char line[1024];
+	int n;
+	int m_nPoints = 0, m_nNormals = 0, m_nFaces = 0;
+	//Read ply header
+	while(ifs.peek() != EOF){
+		ifs.getline(line, 1024);
+		std::stringstream sstr(line);
+		std::string str = "";
+		sstr >> str;
+		if("element" == str){
+			sstr >> str >> n;
+			if("vertex" == str)	m_nPoints = n;
+			else if("face" == str) m_nFaces = n;
+		}else if("property" == str){
+			sstr >> str;
+			if("float" == str || "double" == str){
+				sstr >> str;
+				if("nx" == str || "ny" == str || "nz" == str)	m_nNormals = m_nPoints;
+			}
+		}else if("end_header" == str){
+			break;
+		}
+	}
+	points.resize(m_nPoints);
+	normals.resize(m_nNormals);
+	faces.resize(m_nFaces * 3);
+	Eigen::Vector3f pt, normal;
+	int vertex[3];
+	int polygon_type;
+	bool b = (m_nNormals == m_nPoints);
+	for(int i = 0; i < m_nPoints; ++i){
+		ifs >> pt[0] >> pt[1] >> pt[2];
+		points[i] = pt;
+		if(b){
+			ifs >> normal[0] >> normal[1] >> normal[2];
+			normals[i] = normal;
+			//normals[i].Normalize();
+			normals[i].normalize();
+		}
+	}
+	for(int i = 0; i < m_nFaces * 3; i += 3){
+		ifs >> polygon_type >> vertex[0] >> vertex[1] >> vertex[2];
+		faces[i] = vertex[0];
+		faces[i + 1] = vertex[1];
+		faces[i + 2] = vertex[2];
+	}
+	ifs.close();
+	//std::cout << "Read points: " << m_nPoints << std::endl;
+	//std::cout << "Read normals: " << m_nNormals << std::endl;
+	//std::cout << "Read faces: " << m_nFaces << std::endl;
+}
+
+static void WriteObj(
+	const std::string filename,
+	const std::vector<Eigen::Vector3f> points,
+	const std::vector<Eigen::Vector3f> normals = std::vector<Eigen::Vector3f>(),
+	const std::vector<int> faces = std::vector<int>()
+	){
+		using namespace std;
+		ofstream ofs;
+		ofs.open(filename.c_str(), ofstream::out);
+
+		ofs << "####" << endl;
+		ofs << "#" << endl;
+		ofs << "# OBJ File Generated by MultiviewStereoApp Program" << endl;
+		ofs << "#" << endl;
+		ofs << "####" << endl;
+		ofs << "# Object " << filename << endl;
+		ofs << "#" << endl;
+		ofs << "# Vertices: " << points.size() << endl;
+		ofs << "# Faces: " << faces.size() / 3 << endl;
+		ofs << "#" << endl;
+		ofs << "####" << endl;
+		
+		if(normals.size() == points.size()){
+			for(int i = 0; i < (int)points.size(); ++i){
+				ofs << "vn " 
+					<< normals[i][0] << " " 
+					<< normals[i][1] << " " 
+					<< normals[i][2] << endl;
+				ofs << "v " 
+					<< points[i][0] << " " 
+					<< points[i][1] << " " 
+					<< points[i][2] << endl;
+			}
+		}else{
+			for(int i = 0; i < (int)points.size(); ++i){
+				ofs << "v " 
+					<< points[i][0] << " " 
+					<< points[i][1] << " " 
+					<< points[i][2] << endl;
+			}
+		}
+
+		ofs << "# " << points.size() << " vertices, " << normals.size() << " vertices normals" << endl;
+		ofs << endl;
+
+		int tri_num = (int)(faces.size() / 3);
+		if(normals.size() == points.size()){
+			for(int i = 0; i < tri_num; ++i){
+				ofs << "f " 
+					<< faces[3 * i] + 1 << "//" << faces[3 * i] + 1 << " " 
+					<< faces[3 * i + 1] + 1 << "//" << faces[3 * i + 1] + 1 <<" " 
+					<< faces[3 * i + 2] + 1 << "//" << faces[3 * i + 2] + 1 << endl;
+			}
+		}else{
+			for(int i = 0; i < tri_num; ++i){
+				ofs << "f " 
+					<< faces[3 * i] + 1 << " " 
+					<< faces[3 * i + 1] + 1 << " " 
+					<< faces[3 * i + 2] + 1<< endl;
+			}
+		}
+		ofs.close();
+}
+
+static void ReadObj(
+	const std::string filename,
+	std::vector<Eigen::Vector3f> &points,
+	std::vector<Eigen::Vector3f> &normals = std::vector<Eigen::Vector3f>(),
+	std::vector<int> &facets = std::vector<int>()){
+
+		points.clear();
+		normals.clear();
+		facets.clear();
+		std::ifstream ifs;
+		ifs.open(filename.c_str(), std::ifstream::in);
+		if(!ifs.is_open()){
+			std::cerr << "ERROR: Open File " << filename << " Failed! Please check if it exists" << std::endl;
+			exit(-1);
+		}
+		char line[512];
+		while(ifs.peek() != EOF){
+			ifs.getline(line, 512);
+			if(line[0] == '#')	continue;
+			if(line[0] == 'v'){
+				float x, y, z;
+				if(line[1] == 'n'){
+					sscanf_s(line, "vn %f %f %f", &x, &y, &z);
+					normals.push_back(Eigen::Vector3f(x, y, z));
+					//normals.back().Normalize();
+					normals.back().normalize();
+				}else{
+					sscanf_s(line, "v %f %f %f", &x, &y, &z);
+					points.push_back(Eigen::Vector3f(x, y, z));
+				}
+			}
+			if(line[0] == 'f'){
+				int ptIdx[3], nIdx[3];
+				if(normals.size() > 0){
+					sscanf_s(line, "f %d//%d %d//%d %d//%d", &ptIdx[0], &nIdx[0], &ptIdx[1], &nIdx[1], &ptIdx[2], &nIdx[2]);
+					//facets.push_back(Eigen::Vector3i(ptIdx[0] - 1, ptIdx[1] - 1, ptIdx[2] - 1));
+					facets.push_back(ptIdx[0] - 1);
+					facets.push_back(ptIdx[1] - 1);
+					facets.push_back(ptIdx[2] - 1);
+				}else{
+					sscanf_s(line, "f %d %d %d", &ptIdx[0], &ptIdx[1], &ptIdx[2]);
+					//facets.push_back(Eigen::Vector3i(ptIdx[0] - 1, ptIdx[1] - 1, ptIdx[2] - 1));
+					facets.push_back(ptIdx[0] - 1);
+					facets.push_back(ptIdx[1] - 1);
+					facets.push_back(ptIdx[2] - 1);
+				}
+			}
+		}
+		
+		//std::cout << "Read points: " << points.size() << std::endl;
+		//std::cout << "Read normals: " << normals.size() << std::endl;
+		//std::cout << "Read facets: " << facets.size() / 3 << std::endl;
+
+		ifs.close();
+}
+
+#endif

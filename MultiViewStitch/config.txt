@@ -1,0 +1,14 @@
+ImgPathList ./imgPathList.txt
+ViewCount 3
+MinMatchCount 4
+IterNum 100
+SampleIterval 24
+SSDWin 7
+#Threshold 0.6
+PixelError 55.0
+DistMax 0.7
+RatioMax 0.8
+#HMarginRatio 0.0
+#VMarginRatio 0.0
+HMarginRatio 0.15
+VMarginRatio 0.15
