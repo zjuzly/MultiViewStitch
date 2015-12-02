@@ -45,18 +45,6 @@ void Image3D::LoadDepthMap(const std::string rawpath, std::vector<double> &depth
 }
 
 void Image3D::SolveUnProjectionD(const std::vector<double> &depth){
-	//double fMinDepth = std::numeric_limits<double>::max();
-	//double fMaxDepth = std::numeric_limits<double>::min();
-	//for (const auto & d : depth){
-	//	fMinDepth = std::min(fMinDepth, d);
-	//	fMaxDepth = std::max(fMaxDepth, d);
-	//}
-	//
-	//char fn[128];
-	//static int no = 0;
-	//sprintf_s(fn, "./mesh%d.obj", no++);
-	//d2m = Depth2Model(fMinDepth - 0.0001, fMaxDepth + 0.0001, 2.0);
-	//d2m.SaveModel(depth, cam, fn);
 	int w = cam.W();
 	int h = cam.H();
 	point3d.resize(w * h);
@@ -91,14 +79,12 @@ void Image3D::GenNewViews(){
 	K_(1, 0) = 0.0; K_(1, 1) = 1.0 / K(1, 1); K_(1, 2) = -K(1, 2) / K(1, 1);
 	K_(2, 0) = 0.0; K_(2, 1) = 0.0; K_(2, 2) = 1.0;
 	//K_ = K.inverse();
-	//std::cout << K_ * K << std::endl;
 
-	Eigen::Vector3d axis(R(1, 0), R(1, 1), R(1, 2));
+	Eigen::Vector3d axis(R(axis, 0), R(axis, 1), R(axis, 2));
 
 	std::vector<double> angle;
-	double step = 10.0;
-	for (int i = viewCount / 2; i > 0; --i){ angle.push_back(-step * i); }
-	for (int i = 0; i <= viewCount / 2; ++i){ angle.push_back(step * i); }
+	for (int i = viewCount / 2; i > 0; --i){ angle.push_back(-rotAngle * i); }
+	for (int i = 0; i <= viewCount / 2; ++i){ angle.push_back(rotAngle * i); }
 
 	std::cout << "Generating views#: ";
 	for (int k = 0; k < viewCount; ++k){
@@ -110,17 +96,6 @@ void Image3D::GenNewViews(){
 		RotationMatrix(angle[k] / 180 * M_PI, axis, R_);
 
 		H = K * (R_ * K_);
-		//Eigen::Matrix3d H_;
-		//for(int i = 0; i < 3; ++i){
-		//	H_(i, 0) = R_(i, 0) * K_(0, 0) + R_(i, 1) * K_(1, 0) + R_(i, 2) * K_(2, 0);
-		//	H_(i, 1) = R_(i, 0) * K_(0, 1) + R_(i, 1) * K_(1, 1) + R_(i, 2) * K_(2, 1);
-		//	H_(i, 2) = R_(i, 0) * K_(0, 2) + R_(i, 1) * K_(1, 2) + R_(i, 2) * K_(2, 2);
-		//}
-		//for(int i = 0; i < 3; ++i){
-		//	H(i, 0) = K(i, 0) * H_(0, 0) + K(i, 1) * H_(1, 0) + K(i, 2) * H_(2, 0);
-		//	H(i, 1) = K(i, 0) * H_(0, 1) + K(i, 1) * H_(1, 1) + K(i, 2) * H_(2, 1);
-		//	H(i, 2) = K(i, 0) * H_(0, 2) + K(i, 1) * H_(1, 2) + K(i, 2) * H_(2, 2);
-		//}
 
 		std::vector<Eigen::Vector2d> xy(w * h);
 		double minu, minv, maxu, maxv;
@@ -164,17 +139,32 @@ void Image3D::GenNewViews(){
 					cv::Vec3b rgb12 = image.at<cv::Vec3b>(v22, u11);
 					cv::Vec3b rgb21 = image.at<cv::Vec3b>(v11, u22);
 					cv::Vec3b rgb22 = image.at<cv::Vec3b>(v22, u22);
-					//double s = (u22 - u11) * (v22 - v11);
-					double s1 = (u22 - uf) * (v22 - vf);// / s;
-					double s2 = (uf - u11) * (v22 - vf);// / s;
-					double s3 = (u22 - uf) * (vf - v11);// / s;
-					double s4 = (uf - u11) * (vf - v11);// / s;
 					cv::Vec3b rgb;
-					rgb[0] = uchar(rgb11[0] * s1 + rgb21[0] * s2 + rgb12[0] * s3 + rgb22[0] * s4);
-					rgb[1] = uchar(rgb11[1] * s1 + rgb21[1] * s2 + rgb12[1] * s3 + rgb22[1] * s4);
-					rgb[2] = uchar(rgb11[2] * s1 + rgb21[2] * s2 + rgb12[2] * s3 + rgb22[2] * s4);
+					if (fabs(u11 - u22) <= 1e-9){
+						double s1 = (vf - v11) / (v22 - v11);
+						double s2 = 1 - s1;
+						rgb[0] = uchar(rgb11[0] * s2 + rgb12[0] * s1);
+						rgb[1] = uchar(rgb11[1] * s2 + rgb12[1] * s1);
+						rgb[2] = uchar(rgb11[2] * s2 + rgb12[2] * s1);
+					}
+					else if (fabs(v11 - v22) <= 1e-9){
+						double s1 = (uf - u11) / (u22 - u11);
+						double s2 = 1 - s1;
+						rgb[0] = uchar(rgb11[0] * s2 + rgb21[0] * s1);
+						rgb[1] = uchar(rgb11[1] * s2 + rgb21[1] * s1);
+						rgb[2] = uchar(rgb11[2] * s2 + rgb21[2] * s1);
+					}
+					else{
+						double s1 = (u22 - uf) * (v22 - vf);
+						double s2 = (uf - u11) * (v22 - vf);
+						double s3 = (u22 - uf) * (vf - v11);
+						double s4 = (uf - u11) * (vf - v11);
+						rgb[0] = uchar(rgb11[0] * s1 + rgb21[0] * s2 + rgb12[0] * s3 + rgb22[0] * s4);
+						rgb[1] = uchar(rgb11[1] * s1 + rgb21[1] * s2 + rgb12[1] * s3 + rgb22[1] * s4);
+						rgb[2] = uchar(rgb11[2] * s1 + rgb21[2] * s2 + rgb12[2] * s3 + rgb22[2] * s4);
+					}
 					img.at<cv::Vec3b>(v, u) = rgb;
-					texIndex_[v * w_ + u] = (int(vf + 0.5) * w_ + int(uf + 0.5));
+					texIndex_[v * w_ + u] = (int(vf) * w_ + int(uf));
 				}
 			}
 		}

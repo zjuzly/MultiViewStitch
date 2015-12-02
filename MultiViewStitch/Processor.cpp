@@ -5,25 +5,13 @@
 #include "PlyObj.h"
 #include "Processor.h"
 #include "Vector.h"
+#include "Depth2Model.h"
+#include "Alignment.h"
 #include <algorithm>
 #include <set>
 #include <unordered_map>
 
 #define PRINT_INFO
-
-struct Node{
-	int x[2];
-	Node(int x_, int y_){
-		x[0] = x_; x[1] = y_;
-	}
-	bool operator < (const Node &other) const{
-		for (int i = 0; i < 2; ++i){
-			if (x[i] < other.x[0]) return true;
-			else if (x[i] > other.x[1]) return false;
-		}
-		return false;
-	}
-};
 
 void Processor::SetParamFromFile(const std::string filename){
 	std::ifstream ifs;
@@ -42,12 +30,16 @@ void Processor::SetParamFromFile(const std::string filename){
 		else if ("IterNum"		 == tip){ ifs >> iter_num;			}
 		else if ("SampleIterval" == tip){ ifs >> sample_interval;	}
 		else if ("SSDWin"		 == tip){ ifs >> ssd_win;			}
-		else if ("Threshold"	 == tip){ ifs >> threshold;			}
+		else if ("Axis"			 == tip){ ifs >> axis;				}
+		else if ("RotAngle"		 == tip){ ifs >> rot_angle;			}
 		else if ("PixelError"	 == tip){ ifs >> pixel_err;			}
+		else if ("SSDError"		 == tip){ ifs >> ssd_err;			}
 		else if ("DistMax"		 == tip){ ifs >> distmax;			}
 		else if ("RatioMax"		 == tip){ ifs >> ratiomax;			}
 		else if ("HMarginRatio"  == tip){ ifs >> h_margin_ratio;	}
 		else if ("VMarginRatio"  == tip){ ifs >> v_margin_ratio;	}
+		else if ("MinDsp"		 == tip){ ifs >> m_fMinDsp;			}
+		else if ("MaxDsp"		 == tip){ ifs >> m_fMaxDsp;			}
 		else if ("ImgPathList"	 == tip){ ifs >> imgPathListFile;	}
 	}
 	ifs.close();
@@ -61,6 +53,8 @@ void Processor::SetParamFromFile(const std::string filename){
 	std::string imgdir;
 	while (ifs.peek() != EOF){
 		ifs >> imgdir;
+		if (imgdir.size() == 0) continue;
+		else if (imgdir[0] == '#') continue;
 		imgdirs.push_back(imgdir);
 	}
 	ifs.close();
@@ -153,7 +147,7 @@ void Processor::RemoveOutliers(
 		double scale_;
 		Eigen::Matrix3d R_;
 		Eigen::Vector3d t_;
-		SRTSolver solver(200);
+		SRTSolver solver(80);
 		solver.SetPrintFlag(false);
 		solver.SetInput(matchPoints, im.GetCamera(), jm.GetCamera());
 		solver.EstimateTransform(scale_, R_, t_);
@@ -352,7 +346,7 @@ void Processor::CalcSimilarityTransformation(
 #pragma region //Generate Views
 	std::string actsfile1 = imgdirs[0] + "seq.act";
 	std::vector<Camera> cameras1 = LoadCalibrationFromActs(actsfile1);
-	std::vector<Image3D> im(cameras1.size(), Image3D(view_count));
+	std::vector<Image3D> im(cameras1.size(), Image3D(view_count, axis, rot_angle));
 	CreateDir(imgdirs[0] + "Views/");
 	for (int i = 0; i < im.size(); ++i){
 		char imgpath[128], rawpath[128];
@@ -363,7 +357,7 @@ void Processor::CalcSimilarityTransformation(
 
 	std::string actsfile2 = imgdirs[1] + "seq.act";
 	std::vector<Camera> cameras2 = LoadCalibrationFromActs(actsfile2);
-	std::vector<Image3D> jm(cameras2.size(), Image3D(view_count));
+	std::vector<Image3D> jm(cameras2.size(), Image3D(view_count, axis, rot_angle));
 	CreateDir(imgdirs[1] + "Views/");
 	for (int i = 0; i < (int)jm.size(); ++i){
 		char imgpath[128], rawpath[128];
@@ -478,6 +472,7 @@ void Processor::CalcSimilarityTransformation(
 }
 
 void Processor::CalcSimilarityTransformationSeq(
+	const std::vector<std::vector<Camera>> &cameras,
 	std::vector<double> &scales,
 	std::vector<Eigen::Matrix3d> &Rs,
 	std::vector<Eigen::Vector3d> &ts
@@ -489,15 +484,15 @@ void Processor::CalcSimilarityTransformationSeq(
 #pragma region //Generate Views
 	std::vector<std::vector<Image3D>> models(imgdirs.size());
 	for (int k = 0; k < models.size(); ++k){
-		std::string actsfile = imgdirs[k] + "seq.act";
-		std::vector<Camera> cameras = LoadCalibrationFromActs(actsfile);
-		models[k].resize(cameras.size(), Image3D(view_count));
+		//std::string actsfile = imgdirs[k] + "seq.act";
+		//std::vector<Camera> cameras = LoadCalibrationFromActs(actsfile);
+		models[k].resize(cameras[k].size(), Image3D(view_count, axis, rot_angle));
 		CreateDir(imgdirs[k] + "Views/");
 		for (int i = 0; i < models[k].size(); ++i){
 			char imgpath[128], rawpath[128];
 			sprintf_s(imgpath, "%s%05d.jpg", imgdirs[k].c_str(), i);
 			sprintf_s(rawpath, "%sDATA/_depth%d.raw", imgdirs[k].c_str(), i);
-			models[k][i].LoadModel(imgpath, rawpath, cameras[i]);
+			models[k][i].LoadModel(imgpath, rawpath, cameras[k][i]);
 		}
 	}
 #pragma endregion
@@ -605,14 +600,18 @@ void Processor::CalcSimilarityTransformationSeq(
 				int newSize = 0;
 				for (int idx = 0; idx < matches[i][j].size(); ++idx){
 					const std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[i][j][idx];
-					int u1 = int(pr.first[0] + 0.5);
-					int v1 = int(pr.first[1] + 0.5);
-					int u2 = int(pr.second[0] + 0.5);
-					int v2 = int(pr.second[1] + 0.5);
+					//int u1 = int(pr.first[0] + 0.5);
+					//int v1 = int(pr.first[1] + 0.5);
+					//int u2 = int(pr.second[0] + 0.5);
+					//int v2 = int(pr.second[1] + 0.5);
+					int u1 = pr.first[0];
+					int v1 = pr.first[1];
+					int u2 = pr.second[0];
+					int v2 = pr.second[1];
 					if (u1 >= ssd_win && v1 >= ssd_win && u2 >= ssd_win && v2 >= ssd_win &&
 						u1 < w - ssd_win && v1 < h - ssd_win && u2 < w - ssd_win && v2 < h - ssd_win){
-						double err_ssd = FeatureProc::SSD(imgs[k][i], pr.first[0], pr.first[1], imgs[k + 1][j], pr.second[0], pr.second[1], ssd_win);
-						if (err_ssd <= 16.0){
+						double err = FeatureProc::SSD(imgs[k][i], pr.first[0], pr.first[1], imgs[k + 1][j], pr.second[0], pr.second[1], ssd_win);
+						if (err <= ssd_err){
 							matches[i][j][newSize++] = matches[i][j][idx];
 						}
 					}
@@ -734,10 +733,21 @@ void Processor::CalcSimilarityTransformationSeq(
 void Processor::AlignmentSeq(){
 	srand((unsigned int)time(NULL));
 
+	std::vector<std::vector<Camera>> cameras(imgdirs.size());
+	for (int k = 0; k < cameras.size(); ++k){
+		//std::string actsfile = imgdirs[k] + "seq.act";
+		std::vector<std::string> actsfiles = ScanNSortDirectory(imgdirs[k].c_str(), "act");
+		cameras[k] = LoadCalibrationFromActs(actsfiles[0]);
+	}
+
 	std::vector<double> scales;
 	std::vector<Eigen::Matrix3d> Rs;
 	std::vector<Eigen::Vector3d> ts;
-	CalcSimilarityTransformationSeq(scales, Rs, ts);
+	CalcSimilarityTransformationSeq(cameras, scales, Rs, ts);
+
+	scales.push_back(1.0);
+	Rs.push_back(Eigen::Matrix3d::Identity());
+	ts.push_back(Eigen::Vector3d::Zero());
 
 	int size = scales.size();
 	for (int k = 0; k < size; ++k){
@@ -750,6 +760,7 @@ void Processor::AlignmentSeq(){
 		std::cout << ts[k].transpose() << std::endl;
 	}
 	char fn[128];
+#if 0
 	for (int k = 0; k < size; ++k){
 		std::vector<Eigen::Vector3f> points;
 		std::vector<int> facets;
@@ -761,4 +772,80 @@ void Processor::AlignmentSeq(){
 		sprintf_s(fn, "./ans%d.obj", k);
 		WriteObj(fn, points, std::vector<Eigen::Vector3f>(), facets);
 	}
+#else
+	std::vector<std::string> rawpaths;
+	for (int k = 0; k < imgdirs.size(); ++k){
+		int frmNoHalf = cameras[k].size() / 2;
+		const Camera cam = cameras[k][frmNoHalf];
+		int w = cam.W();
+		int h = cam.H();
+
+		sprintf_s(fn, "%sDATA/_depth%d.raw", imgdirs[k].c_str(), frmNoHalf);
+
+		std::vector<double> dsp(w * h);
+		float *raw = new float[w * h];
+		std::ifstream ifs(fn, std::ifstream::in | std::ifstream::binary);
+		ifs.read((char*)raw, w * h * sizeof(float));
+		ifs.close();
+
+		for (int i = 0; i < w * h; ++i) dsp[i] = raw[i];
+
+		Depth2Model d2m(m_fMinDsp, m_fMaxDsp, 0.4);
+		d2m.SaveModel(dsp, cam);
+
+		std::vector<Eigen::Vector3d> &point3d = d2m.point3d;
+		std::vector<int> facets(d2m.facets.size() * 3);
+		for (int i = 0; i < d2m.facets.size(); ++i){
+			facets[i * 3] = d2m.facets[i][0];
+			facets[i * 3 + 1] = d2m.facets[i][1];
+			facets[i * 3 + 2] = d2m.facets[i][2];
+		}
+
+		int newSize = 0;
+		std::unordered_map<int, int> mp;
+		for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
+			const Eigen::Vector3d &p3d = point3d[pIdx];
+			bool removed = false;
+			for (int cIdx = 0; cIdx < cameras[k].size(); ++cIdx){
+				if (cIdx != frmNoHalf){
+					int u, v;
+					cameras[k][cIdx].GetImgCoordFromWorld(p3d, u, v);
+					if (!CheckRange(u, v, w, h)){
+						removed = true;
+						break;
+					}
+				}
+			}
+			if (!removed){
+				point3d[newSize] = point3d[pIdx];
+				mp[pIdx] = newSize;
+				newSize++;
+			}
+		}
+		std::cout << newSize << " | " << point3d.size() << std::endl;
+		point3d.resize(newSize);
+
+		std::vector<int> facets_;
+		for (int fIdx = 0; fIdx < facets.size(); fIdx += 3){
+			if (mp.count(facets[fIdx]) && mp.count(facets[fIdx + 1]) && mp.count(facets[fIdx + 2])){
+				facets_.push_back(mp[facets[fIdx]]);
+				facets_.push_back(mp[facets[fIdx + 1]]);
+				facets_.push_back(mp[facets[fIdx + 2]]);
+			}
+		}
+		std::swap(facets, facets_);
+
+
+		Alignment align;
+		align.RemoveGround(point3d, std::vector<Eigen::Vector3d>(), facets);
+
+		std::vector<Eigen::Vector3f> point3f(point3d.size());
+		for (int i = 0; i < point3d.size(); ++i){
+			point3f[i] = (scales[k] * Rs[k] * point3d[i] + ts[k]).cast<float>();
+		}
+		sprintf_s(fn, "./ans%d.obj", k);
+		WriteObj(fn, point3f, std::vector<Eigen::Vector3f>(), facets);
+	}
+
+#endif
 }

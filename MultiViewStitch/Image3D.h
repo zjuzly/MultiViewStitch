@@ -10,7 +10,7 @@
 
 class Image3D{
 public:
-	Image3D(int viewCount_ = 1){ frmNo = 0; viewCount = viewCount_; }
+	Image3D(int viewCount_ = 1, int axis_ = 0, double rotAngle_ = 0.0){ frmNo = 0; viewCount = viewCount_; axis = axis_; rotAngle = rotAngle_; }
 	void LoadModel(const std::string imgpath, const std::string rawpath, const Camera &cam);
 	int GetViewCount() const{ return viewCount; }
 	int GetTexIndex(int view, int x, int y) const{ return texIndex[view][y * cam.W() + x]; }
@@ -31,6 +31,8 @@ private:
 private:
 	int frmNo;
 	int viewCount;
+	int axis;
+	double rotAngle;
 	cv::Mat image;
 	Camera cam;
 	std::string path;

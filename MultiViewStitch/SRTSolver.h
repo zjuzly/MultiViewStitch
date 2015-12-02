@@ -9,19 +9,6 @@ class SRTSolver{
 public:
 	SRTSolver(){ iter_num = 100; isPrint = true; }
 	SRTSolver(int iter_num_){ iter_num = iter_num_; isPrint = true; }
-	//void SetInput(
-	//	const std::vector<std::pair<Vec3d, Vec3d>> &matches_,
-	//	const Camera &cam1,
-	//	const Camera &cam2){
-	//	matches.resize(matches_.size());
-	//	for (int i = 0; i < matches_.size(); ++i){
-	//		matches[i] = std::make_pair(Eigen::Vector3d(matches_[i].first[0], matches_[i].first[1], matches_[i].first[2]),
-	//			Eigen::Vector3d(matches_[i].second[0], matches_[i].second[1], matches_[i].second[2]));
-	//	}
-	//	//std::copy(matches_.begin(), matches_.end(), std::back_inserter(matches));
-	//	this->cam1 = cam1;
-	//	this->cam2 = cam2;
-	//}
 	void SetInput(
 		const std::vector<std::pair<Eigen::Vector3d, Eigen::Vector3d>> &matches_,
 		const Camera &cam1,

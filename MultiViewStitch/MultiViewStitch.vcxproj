@@ -151,6 +151,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Alignment.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Depth2Model.h" />
     <ClInclude Include="FeatureProc.h" />
@@ -159,10 +160,12 @@
     <ClInclude Include="PlyObj.h" />
     <ClInclude Include="Processor.h" />
     <ClInclude Include="SRTSolver.h" />
+    <ClInclude Include="UnionSetUtils.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Alignment.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Depth2Model.cpp" />
     <ClCompile Include="FeatureProc.cpp" />
@@ -170,6 +173,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Processor.cpp" />
     <ClCompile Include="SRTSolver.cpp" />
+    <ClCompile Include="UnionSetUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="config.txt" />
