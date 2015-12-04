@@ -50,8 +50,8 @@ void Processor::SetParamFromFile(const std::string filename){
 		exit(-1);
 	}
 	std::vector<std::string>().swap(imgdirs);
-	std::string imgdir;
 	while (ifs.peek() != EOF){
+		std::string imgdir;
 		ifs >> imgdir;
 		if (imgdir.size() == 0) continue;
 		else if (imgdir[0] == '#') continue;
@@ -64,9 +64,6 @@ void Processor::RemoveDupPoints(
 	const std::vector<Image3D> &im,
 	const std::vector<Image3D> &jm,
 	std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> &matches){
-//#ifdef PRINT_INFO
-//	std::cout << "Remove duplicated points..." << std::endl;
-//#endif
 	
 	std::vector<std::vector<std::set<std::pair<Vec2i, Vec2i>>>> uniqueMatches(im.size(),
 		std::vector<std::set<std::pair<Vec2i, Vec2i>>>(jm.size()));
@@ -113,9 +110,9 @@ void Processor::RemoveDupPoints(
 				if (!flag) matches[i][j][j0++] = matches[i][j][k];
 			}
 			matches[i][j].resize(j0);
-#ifdef PRINT_INFO
-			std::cout << "Frame# " << i << ", " << j << " | " << matches[i][j].size() << " sift matches found" << std::endl;
-#endif
+//#ifdef PRINT_INFO
+//			std::cout << "Frame# " << i << ", " << j << " | " << matches[i][j].size() << " sift matches found" << std::endl;
+//#endif
 		}
 	}
 }
@@ -140,9 +137,9 @@ void Processor::RemoveOutliers(
 	Eigen::Matrix3d R;
 	Eigen::Vector3d t;
 
-#ifdef PRINT_INFO
-	std::cout << "+--------------------------------------+" << std::endl;
-#endif
+//#ifdef PRINT_INFO
+//	std::cout << "+---------------------------------------------+" << std::endl;
+//#endif
 	for (int k = 0; k < 2; ++k){
 		double scale_;
 		Eigen::Matrix3d R_;
@@ -155,44 +152,23 @@ void Processor::RemoveOutliers(
 		std::vector<double> dists(size);
 		double err_inlier_ = 0.0, err_all_ = 0.0;
 		int newSize = 0;
-#if 0
-		double maxDist = 1 - HUGE_VAL;//std::numeric_limits<double>::min();
-		for (int i = 0; i < size; ++i){
-			const Vec3d &p1 = matchPoints[i].first;
-			const Vec3d &p2 = matchPoints[i].second;
-			dists[i] = (scale_ * R_ * p1 + t_ - p2).norm();
-			maxDist = __max(dists[i], maxDist);
-		}
-		for (int i = 0; i < size; ++i){
-			if (dists[i] <= threshold * maxDist){
-				matchPoints[newSize] = matchPoints[i];
-				matches[newSize++] = matches[i];
-			}
-		}
-		matchPoints.resize(newSize);
-		matches.resize(newSize);
-
-		err_ = solver.ResidualError(scale_, R_, t_);
-		if (err > err_){
-			err = err_;
-			scale = scale_;
-			R = R_;
-			t = t_;
-			//std::cout << "Residual Error£º " << err_ << std::endl;
-			std::cout << "pixel reproject error = " << err_ << std::endl;
-			std::cout << "Removed outliers£º " << size - newSize << " | " << size << std::endl;
-		}
-#else
 		for (int i = 0; i < size; ++i){
 			const Eigen::Vector3d &p1 = matchPoints[i].first;
 			const Eigen::Vector3d &p2 = matchPoints[i].second;
-			Eigen::Vector3d tp = scale_ * R_ * p1 + t_;
 
+			Eigen::Vector3d tp = scale_ * R_ * p1 + t_;
 			int u1, v1, u2, v2;
 			jm.GetCamera().GetImgCoordFromWorld(tp, u1, v1);
 			jm.GetCamera().GetImgCoordFromWorld(p2, u2, v2);
 
-			double pixel_err_ = sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2));
+			Eigen::Vector3d tp_ = 1.0 / scale_ * R_.transpose() * (p2 - t_);
+			int u1_, v1_, u2_, v2_;
+			im.GetCamera().GetImgCoordFromWorld(tp_, u2_, v2_);
+			im.GetCamera().GetImgCoordFromWorld(p1, u1_, v1_);
+
+			double pixel_err_ = (sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2)) + 
+				sqrt((u1_ - u2_) * (u1_ - u2_) + (v1_ - v2_) * (v1_ - v2_))) * 0.5;
+			//double pixel_err_ = sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2));
 			err_all_ += pixel_err_;
 			if (pixel_err_ <= pixel_err){
 				matchPoints[newSize] = matchPoints[i];
@@ -214,16 +190,15 @@ void Processor::RemoveOutliers(
 				t = t_;
 			}
 		}
-		std::cout << "pixel reproject error = " << err_inlier_ << " / " << err << std::endl;
-		std::cout << "inlier ratio: " << inlier_ratio << std::endl;
-		std::cout << "Removed outliers£º " << size - newSize << " | " << size << std::endl;
-#endif
+		//std::cout << "pixel reproject error = " << err_inlier_ << " / " << err << std::endl;
+		//std::cout << "inlier ratio: " << inlier_ratio << std::endl;
+		//std::cout << "Removed outliers£º " << size - newSize << " | " << size << std::endl;
 		size = newSize;
 		if (newSize < 3 || fabs(inlier_ratio - 1.0) <= 1e-9) break;
 	}
-#ifdef PRINT_INFO
-	std::cout << "+--------------------------------------+" << std::endl;
-#endif
+//#ifdef PRINT_INFO
+//	std::cout << "+---------------------------------------------+" << std::endl;
+//#endif
 	inlier_ratio_out = inlier_ratio;
 	err_out = err;
 }
@@ -589,69 +564,118 @@ void Processor::CalcSimilarityTransformationSeq(
 
 	for (int k = 0; k < models.size() - 1; ++k){
 		std::cout << "|-------------------- Seq " << k << " ----> " << k + 1 << "--------------------|" << std::endl;
+
+		/*-----------------------------Feature Matching-----------------------------*/
 		std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> matches;
 		FeatureProc::MatchFeature(keys[k], keys[k + 1], descs[k], descs[k + 1], distmax, ratiomax, matches);
-		RemoveDupPoints(models[k], models[k + 1], matches);
+		/*-----------------------------Feature Matching-----------------------------*/
 
 		const int w = models[k][0].GetWidth();
 		const int h = models[k][0].GetHeight();
+		const std::vector<Image3D> &model1 = models[k];
+		const std::vector<Image3D> &model2 = models[k + 1];
+
+		//RemoveDupPoints(model1, model2, matches);
+
+#if 1
+		std::vector<std::vector<int>> size1(model1.size(), std::vector<int>(model2.size()));
+		std::vector<std::vector<int>> size2(model1.size(), std::vector<int>(model2.size()));
+		std::vector<std::vector<int>> size3(model1.size(), std::vector<int>(model2.size()));
+
+		/*-------------------------Remove Duplicate Points--------------------------*/
+		std::vector<std::vector<std::set<std::pair<Vec2i, Vec2i>>>> uniqueMatches(model1.size(),
+			std::vector<std::set<std::pair<Vec2i, Vec2i>>>(model2.size()));
+		for (int i = 0; i < matches.size(); ++i){
+			int frmNo1 = i / view_count;
+			for (int j = 0; j < matches[i].size(); ++j){
+				int frmNo2 = j / view_count;
+				for (int k = 0; k < matches[i][j].size(); ++k){
+					std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[i][j][k];
+					int idx1 = model1[frmNo1].GetTexIndex(i % view_count, pr.first[0], pr.first[1]);
+					int idx2 = model2[frmNo2].GetTexIndex(j % view_count, pr.second[0], pr.second[1]);
+					if (idx1 != -1 && idx2 != -1 && model1[frmNo1].IsValid(pr.first[0], pr.first[1]) && model2[frmNo2].IsValid(pr.second[0], pr.second[1])){
+						uniqueMatches[frmNo1][frmNo2].insert(std::make_pair(Vec2i(idx1 % w, idx1 / w), Vec2i(idx2 % w, idx2 / w)));
+					}
+				}
+			}
+		}
+		std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>>().swap(matches);
+		matches.resize(model1.size(), std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>(model2.size()));
+
+		for (int i = 0; i < uniqueMatches.size(); ++i){
+			for (int j = 0; j < uniqueMatches[i].size(); ++j){
+				std::set<std::pair<Vec2i, Vec2i>>::iterator it = uniqueMatches[i][j].begin();
+				for (; it != uniqueMatches[i][j].end(); ++it){
+					matches[i][j].push_back(std::make_pair(Eigen::Vector2i(it->first[0], it->first[1]), Eigen::Vector2i(it->second[0], it->second[1])));
+				}
+				size1[i][j] = matches[i][j].size();
+			}
+		}
+		/*-------------------------Remove Duplicate Points--------------------------*/
+#endif
+		/*----------------------------------SSD Error-------------------------------*/
 		for (int i = 0; i < matches.size(); ++i){
 			for (int j = 0; j < matches[i].size(); ++j){
 				int newSize = 0;
 				for (int idx = 0; idx < matches[i][j].size(); ++idx){
 					const std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[i][j][idx];
-					//int u1 = int(pr.first[0] + 0.5);
-					//int v1 = int(pr.first[1] + 0.5);
-					//int u2 = int(pr.second[0] + 0.5);
-					//int v2 = int(pr.second[1] + 0.5);
-					int u1 = pr.first[0];
-					int v1 = pr.first[1];
-					int u2 = pr.second[0];
-					int v2 = pr.second[1];
+					int u1 = pr.first[0], v1 = pr.first[1];
+					int u2 = pr.second[0], v2 = pr.second[1];
 					if (u1 >= ssd_win && v1 >= ssd_win && u2 >= ssd_win && v2 >= ssd_win &&
 						u1 < w - ssd_win && v1 < h - ssd_win && u2 < w - ssd_win && v2 < h - ssd_win){
-						double err = FeatureProc::SSD(imgs[k][i], pr.first[0], pr.first[1], imgs[k + 1][j], pr.second[0], pr.second[1], ssd_win);
+						double err = FeatureProc::SSD(imgs[k][i], u1, v1, imgs[k + 1][j], u2, v2, ssd_win);
 						if (err <= ssd_err){
 							matches[i][j][newSize++] = matches[i][j][idx];
 						}
 					}
 				}
+//#ifdef PRINT_INFO
+//				std::cout << "Frame# " << i << ", " << j << " " << newSize << " | " << matches[i][j].size() << " matched sift feature after ssd" << std::endl;
+//#endif
 				matches[i][j].resize(newSize);
-#ifdef PRINT_INFO
-				std::cout << "Frame# " << i << ", " << j << " | " << newSize << " matched sift feature after ssd" << std::endl;
-#endif
+				size2[i][j] = newSize;
 			}
 		}
-
-		cv::RNG rng;
-#if 0
+		/*----------------------------------SSD Error-------------------------------*/
+#if 1
+		/*----------------------------------Gap Error-------------------------------*/
+		const double pixelGap = sample_interval * sample_interval;
 		for (int i = 0; i < matches.size(); ++i){
 			for (int j = 0; j < matches[i].size(); ++j){
-				cv::Mat img(imgs[k][i].rows, imgs[k][i].cols, imgs[k][i].type()); 
-				cv::Mat img1(imgs[k][i].rows, imgs[k][i].cols, imgs[k][i].type());
-				imgs[k][i].copyTo(img1);
-				cv::Mat img2(imgs[k + 1][j].rows, imgs[k + 1][j].cols, imgs[k + 1][j].type());
-				imgs[k + 1][j].copyTo(img2);
-				//cv::vconcat(imgs[k][i], imgs[k + 1][j], img);
-				cv::vconcat(img1, img2, img);
-				for (int idx = 0; idx < (int)matches[i][j].size(); ++idx){
-					uchar r = rng.uniform(0.0, 1.0) * 255;
-					uchar g = rng.uniform(0.0, 1.0) * 255;
-					uchar b = rng.uniform(0.0, 1.0) * 255;
-					Vec2i xy1 = matches[i][j][idx].first;
-					Vec2i xy2 = matches[i][j][idx].second;
-					cv::circle(img, cv::Point2f(xy1[0], xy1[1]), 1, cv::Scalar(255, 255, 0));
-					cv::circle(img, cv::Point2f(xy2[0], imgs[k][i].rows + xy2[1]), 1, cv::Scalar(255, 255, 0));
-					cv::line(img, cv::Point2f(xy1[0], xy1[1]), cv::Point2f(xy2[0], imgs[k][i].rows + xy2[1]), cv::Scalar(b, g, r), 2);
+				int k0 = 0, newSize = 0;
+				for (int k = 0; k < matches[i][j].size(); ++k){
+					bool flag = false;
+					for (int k0 = 0; k0 < newSize; ++k0){
+						std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr1 = matches[i][j][k0];
+						std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr2 = matches[i][j][k];
+						Eigen::Vector2i x = pr1.first - pr2.first;
+						Eigen::Vector2i y = pr1.second - pr2.second;
+						if ((x[0] * x[0] + x[1] * x[1]) <= pixelGap || (y[0] * y[0] + y[1] * y[1]) <= pixelGap){
+							flag = true;
+							break;
+						}
+					}
+					if (!flag) matches[i][j][newSize++] = matches[i][j][k];
 				}
-				sprintf_s(fn, "./Match1/match%d_%d_%d.jpg", k, i, j);
-				cv::imshow("match1", img);
-				cv::imwrite(fn, img);
-				cv::waitKey(1);
+				matches[i][j].resize(newSize);
+				size3[i][j] = newSize;
+//#ifdef PRINT_INFO
+//				std::cout << "Frame# " << i << ", " << j << " | " << matches[i][j].size() << " sift matches found" << std::endl;
+//#endif
+			}
+		}
+		/*----------------------------------Gap Error-------------------------------*/
+
+#ifdef PRINT_INFO
+		for (int i = 0; i < model1.size(); ++i){
+			for (int j = 0; j < model2.size(); ++j){
+				std::cout << "Frame# " << i << ", " << j << "; " << size3[i][j] << " | " << size2[i][j] << " | " << size1[i][j] << " sift matches" << std::endl;
 			}
 		}
 #endif
+#endif
 
+		/*-------------------------------Remove Outliers----------------------------*/
 		double err = HUGE_VAL;
 		double inlier_ratio = 0.0;
 		std::cout << "select keyframe..." << std::endl;
@@ -661,7 +685,7 @@ void Processor::CalcSimilarityTransformationSeq(
 				if (matches[i][j].size() < min_match_count) continue;
 				double inlier_ratio_ = 0.0;
 				double res_err = HUGE_VAL;
-				RemoveOutliers(models[k][i], models[k + 1][j], inlier_ratio_, res_err, matches[i][j]);
+				RemoveOutliers(model1[i], model2[j], inlier_ratio_, res_err, matches[i][j]);
 				if (res_err < err && matches[i][j].size() >= min_match_count){
 					maxMatchCount = matches[i][j].size();
 					err = res_err;
@@ -671,7 +695,9 @@ void Processor::CalcSimilarityTransformationSeq(
 				}
 			}
 		}
+		/*-------------------------------Remove Outliers----------------------------*/
 #if 1
+		cv::RNG rng;
 		for (int i = 0; i < matches.size(); ++i){
 			for (int j = 0; j < matches[i].size(); ++j){
 				cv::Mat img(imgs[k][i].rows, imgs[k][i].cols, imgs[k][i].type());
@@ -710,13 +736,14 @@ void Processor::CalcSimilarityTransformationSeq(
 		std::cout << "inlier ratio: " << inlier_ratio << std::endl;
 		for (int i = 0; i < matches[frmIdx1][frmIdx2].size(); ++i){
 			const std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[frmIdx1][frmIdx2][i];
-			Eigen::Vector3d p1 = models[k][frmIdx1].GetPoint(pr.first[0], pr.first[1]);
-			Eigen::Vector3d p2 = models[k + 1][frmIdx2].GetPoint(pr.second[0], pr.second[1]);
+			Eigen::Vector3d p1 = model1[frmIdx1].GetPoint(pr.first[0], pr.first[1]);
+			Eigen::Vector3d p2 = model2[frmIdx2].GetPoint(pr.second[0], pr.second[1]);
 			matchPoints[k].push_back(std::make_pair(p1, p2));
 		}
 
+		/*----------------------------------Solve SRT-------------------------------*/
 		SRTSolver solver(iter_num);
-		solver.SetInput(matchPoints[k], models[k][frmIdx1].GetCamera(), models[k + 1][frmIdx2].GetCamera());
+		solver.SetInput(matchPoints[k], model1[frmIdx1].GetCamera(), model2[frmIdx2].GetCamera());
 		solver.SetPrintFlag(false);
 		solver.EstimateTransform(scales[k], Rs[k], ts[k]);
 		std::cout << "pixel reproject error = " << solver.ResidualError(scales[k], Rs[k], ts[k]) << std::endl;
@@ -726,6 +753,7 @@ void Processor::CalcSimilarityTransformationSeq(
 			scales[k0] = scales[k] * scales[k0];
 		}
 		std::cout << "|------------------------------------------------------|" << std::endl;
+		/*----------------------------------Solve SRT-------------------------------*/
 	}
 #pragma endregion
 }
@@ -751,7 +779,7 @@ void Processor::AlignmentSeq(){
 
 	int size = scales.size();
 	for (int k = 0; k < size; ++k){
-		std::cout << "|--------------------" << k << " ---> " << size << "--------------------|" << std::endl;
+		std::cout << "|--------------------" << k << " ---> " << size - 1 << "--------------------|" << std::endl;
 		std::cout << "Scale: " << scales[k] << std::endl;
 		std::cout << "Rotation Matrix: " << std::endl;
 		std::cout << Rs[k] << std::endl;
@@ -760,19 +788,6 @@ void Processor::AlignmentSeq(){
 		std::cout << ts[k].transpose() << std::endl;
 	}
 	char fn[128];
-#if 0
-	for (int k = 0; k < size; ++k){
-		std::vector<Eigen::Vector3f> points;
-		std::vector<int> facets;
-		std::string mpath = imgdirs[k] + "Model.obj";
-		ReadObj(mpath, points, std::vector<Eigen::Vector3f>(), facets);
-		for (int i = 0; i < points.size(); ++i){
-			points[i] = (scales[k] * Rs[k] * points[i].cast<double>() + ts[k]).cast<float>();
-		}
-		sprintf_s(fn, "./ans%d.obj", k);
-		WriteObj(fn, points, std::vector<Eigen::Vector3f>(), facets);
-	}
-#else
 	std::vector<std::string> rawpaths;
 	for (int k = 0; k < imgdirs.size(); ++k){
 		int frmNoHalf = cameras[k].size() / 2;
@@ -801,6 +816,7 @@ void Processor::AlignmentSeq(){
 			facets[i * 3 + 2] = d2m.facets[i][2];
 		}
 
+#if 1
 		int newSize = 0;
 		std::unordered_map<int, int> mp;
 		for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
@@ -834,7 +850,7 @@ void Processor::AlignmentSeq(){
 			}
 		}
 		std::swap(facets, facets_);
-
+#endif
 
 		Alignment align;
 		align.RemoveGround(point3d, std::vector<Eigen::Vector3d>(), facets);
@@ -846,6 +862,4 @@ void Processor::AlignmentSeq(){
 		sprintf_s(fn, "./ans%d.obj", k);
 		WriteObj(fn, point3f, std::vector<Eigen::Vector3f>(), facets);
 	}
-
-#endif
 }

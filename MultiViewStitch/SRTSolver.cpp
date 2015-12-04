@@ -8,12 +8,21 @@ double SRTSolver::ResidualError(const double scale, Eigen::Matrix3d &R, Eigen::V
 	for (int i = 0; i < matches.size(); ++i){
 		const Eigen::Vector3d &p1 = matches[i].first;
 		const Eigen::Vector3d &p2 = matches[i].second;
+		
 		Eigen::Vector3d tp = scale * R * p1 + t;
 		int u1, v1, u2, v2;
 		cam2.GetImgCoordFromWorld(tp, u1, v1);
 		cam2.GetImgCoordFromWorld(p2, u2, v2);
-		err = err + sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2));
-		//err = err + (scale * R * p1 + t - p2).norm();
+
+		//err = err + sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2));
+
+		Eigen::Vector3d tp_ = 1.0 / scale * R.transpose() * (p2 - t);
+		int u1_, v1_, u2_, v2_;
+		cam1.GetImgCoordFromWorld(tp_, u2_, v2_);
+		cam1.GetImgCoordFromWorld(p1, u1_, v1_);
+		double err1 = sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2));
+		double err2 = sqrt((u1_ - u2_) * (u1_ - u2_) + (v1_ - v2_) * (v1_ - v2_));
+		err = err + (err1 + err2) * 0.5;
 	}
 	err /= matches.size();
 	return err;

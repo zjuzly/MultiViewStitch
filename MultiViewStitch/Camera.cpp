@@ -45,14 +45,15 @@ std::vector<Camera> LoadCalibrationFromActs(std::string filename){
 		std::cerr << "Open File " << filename << " Failed in File = " << __FILE__  << ", Line = " << __LINE__ << std::endl;
 		exit(-1);
 	}
-	char line[4096];
 	int start, end, step;
 	std::vector<Camera> vcamera;
 	Eigen::Matrix3d K = Eigen::Matrix3d::Zero();
 	
 	while (ifs.peek() != EOF){
+		char line[4096];
 		ifs.getline(line, 4096);
 		std::string str(line);
+		if(str.size() == 0 || str[0] == '#') continue;
 		if (str == "<intrinsic parameter>"){
 			ifs.getline(line, 1024);
 			std::vector<std::string> strs = Split(std::string(line), ' ');
