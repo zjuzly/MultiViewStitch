@@ -7,7 +7,7 @@
 
 class Processor{
 public:
-	void SetParamFromFile(const std::string filename);
+	//void SetParamFromFile(const std::string filename);
 	void AlignmentSeq();
 private:
 	void RemoveDupPoints(
@@ -40,24 +40,28 @@ private:
 		std::vector<Eigen::Matrix3d> &Rs,
 		std::vector<Eigen::Vector3d> &ts);
 private:
-	int view_count; //1
-	int min_match_count; //10
-	int iter_num; //100
-	int sample_interval; //40
-	int ssd_win; //7
-	int axis; //x: 0, y: 1, z: 2
-	
-	double rot_angle;
-	double ssd_err;
-	double pixel_err;
-	double distmax; //0.5
-	double ratiomax; //0.5
-	double h_margin_ratio; //0.15
-	double v_margin_ratio; //0.15
-	double m_fMinDsp;
-	double m_fMaxDsp;
+	//bool writeMesh;
 
-	std::vector<std::string> imgdirs;
+	//int view_count; //1
+	//int min_match_count; //10
+	//int iter_num; //100
+	//int sample_interval; //40
+	//int ssd_win; //7
+	//int axis; //x: 0, y: 1, z: 2
+	//
+	//double rot_angle;
+	//double ssd_err;
+	//double pixel_err;
+	//double distmax; //0.5
+	//double ratiomax; //0.5
+	//double hl_margin_ratio; //0.15
+	//double hr_margin_ratio; //0.15
+	//double vl_margin_ratio; //0.15
+	//double vr_margin_ratio; //0.15
+	//double m_fMinDsp;
+	//double m_fMaxDsp;
+
+	//std::vector<std::string> imgdirs;
 };
 
 #endif

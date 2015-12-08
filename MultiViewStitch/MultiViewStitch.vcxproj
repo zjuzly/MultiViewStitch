@@ -157,6 +157,7 @@
     <ClInclude Include="FeatureProc.h" />
     <ClInclude Include="Image3D.h" />
     <ClInclude Include="Matrix.h" />
+    <ClInclude Include="ParamParser.h" />
     <ClInclude Include="PlyObj.h" />
     <ClInclude Include="Processor.h" />
     <ClInclude Include="SRTSolver.h" />
@@ -171,6 +172,7 @@
     <ClCompile Include="FeatureProc.cpp" />
     <ClCompile Include="Image3D.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ParamParser.cpp" />
     <ClCompile Include="Processor.cpp" />
     <ClCompile Include="SRTSolver.cpp" />
     <ClCompile Include="UnionSetUtils.cpp" />

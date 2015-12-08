@@ -1,5 +1,6 @@
 #include "FeatureProc.h"
 #include "Utils.h"
+#include "ParamParser.h"
 #include <GL\glew.h>
 
 #if _DEBUG
@@ -12,8 +13,10 @@
 
 void FeatureProc::DetectFeatureSingleView(
 	const std::string imgpath,
-	const double h_margin_ratio,
-	const double v_margin_ratio,
+	//const double hl_margin_ratio,
+	//const double vl_margin_ratio,
+	//const double hr_margin_ratio,
+	//const double vr_margin_ratio,
 	std::vector<SiftGPU::SiftKeypoint> &keys, 
 	std::vector<float> &descs){
 	SiftGPU *sift = new SiftGPU;
@@ -26,15 +29,21 @@ void FeatureProc::DetectFeatureSingleView(
 
 	cv::Mat img = cv::imread(imgpath);
 	cv::Mat img1 = img.clone();
-	int rowInterval = img.rows * v_margin_ratio;
-	int colInterval = img.cols * h_margin_ratio;
-	for (int i = 0; i < rowInterval; ++i){
+	int rowLeftInterval = img.rows * ParamParser::vl_margin_ratio;
+	int colLeftInterval = img.cols * ParamParser::hl_margin_ratio;
+	int rowRightInterval = img.rows * ParamParser::vr_margin_ratio;
+	int colRightInterval = img.cols * ParamParser::hr_margin_ratio;
+	for (int i = 0; i < rowLeftInterval; ++i){
 		img.row(i).setTo(cv::Scalar(0, 0, 0));
-		img.row(i + img.rows - rowInterval).setTo(cv::Scalar(0, 0, 0));
 	}
-	for (int i = 0; i < colInterval; ++i){
+	for (int i = 0; i < colLeftInterval; ++i){
 		img.col(i).setTo(cv::Scalar(0, 0, 0));
-		img.col(i + img.cols - colInterval).setTo(cv::Scalar(0, 0, 0));
+	}
+	for (int i = 0; i < rowRightInterval; ++i){
+		img.row(i + img.rows - rowRightInterval).setTo(cv::Scalar(0, 0, 0));
+	}
+	for (int i = 0; i < colRightInterval; ++i){
+		img.col(i + img.cols - colRightInterval).setTo(cv::Scalar(0, 0, 0));
 	}
 	uchar* data = (uchar*)img.data;
 
@@ -45,8 +54,8 @@ void FeatureProc::DetectFeatureSingleView(
 	}
 	delete sift;
 #if 1
-	int left = colInterval, right = img.cols - colInterval;
-	int top = rowInterval, bottom = img.rows - rowInterval;
+	int left = colLeftInterval, right = img.cols - colRightInterval;
+	int top = rowLeftInterval, bottom = img.rows - rowRightInterval;
 	int newNum = 0;
 	for (int k = 0; k < keys.size(); ++k){
 		if (keys[k].x < left || keys[k].x > right || keys[k].y < top || keys[k].y > bottom) continue;
@@ -74,8 +83,8 @@ void FeatureProc::MatchFeatureSingleView(
 	const std::vector<SiftGPU::SiftKeypoint> &keys2,
 	const std::vector<float> &descs1,
 	const std::vector<float> &descs2,
-	const double distmax,
-	const double ratiomax,
+	//const double distmax,
+	//const double ratiomax,
 	std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>> &matches){
 	SiftMatchGPU *matcher = new SiftMatchGPU(4096);
 	matcher->VerifyContextGL();
@@ -84,14 +93,14 @@ void FeatureProc::MatchFeatureSingleView(
 	matcher->SetDescriptors(1, keys2.size(), &descs2[0]);
 
 	int(*match_buf)[2] = new int[keys1.size()][2];
-	int num_match = matcher->GetSiftMatch(keys1.size(), match_buf, distmax, ratiomax);
+	int num_match = matcher->GetSiftMatch(keys1.size(), match_buf, ParamParser::distmax, ParamParser::ratiomax);
 	//std::cout << num_match << " sift matches were found;" << std::endl;
 
 	matches.resize(num_match);
 	for (int i = 0; i < num_match; ++i){
 		const SiftGPU::SiftKeypoint & key1 = keys1[match_buf[i][0]];
 		const SiftGPU::SiftKeypoint & key2 = keys2[match_buf[i][1]];
-		matches[i] = std::make_pair(Eigen::Vector2i(int(key1.x), int(key1.y)), Eigen::Vector2i(int(key2.x), int(key2.y)));
+		matches[i] = std::make_pair(Eigen::Vector2i(int(key1.x/* + 0.5*/), int(key1.y/* + 0.5*/)), Eigen::Vector2i(int(key2.x/* + 0.5*/), int(key2.y/* + 0.5*/)));
 	}
 
 	delete[]match_buf;
@@ -100,14 +109,16 @@ void FeatureProc::MatchFeatureSingleView(
 
 void FeatureProc::DetectFeature(
 	const std::vector<std::string> imgpaths,
-	const double h_margin_ratio,
-	const double v_margin_ratio,
+	//const double hl_margin_ratio,
+	//const double vl_margin_ratio,
+	//const double hr_margin_ratio,
+	//const double vr_margin_ratio,
 	std::vector<std::vector<SiftGPU::SiftKeypoint>> &keys,
 	std::vector<std::vector<float>> &descs){
 	keys.resize(imgpaths.size());
 	descs.resize(imgpaths.size());
 	for (int i = 0; i < (int)imgpaths.size(); ++i){
-		DetectFeatureSingleView(imgpaths[i], h_margin_ratio, v_margin_ratio, keys[i], descs[i]);
+		DetectFeatureSingleView(imgpaths[i], /*hl_margin_ratio, vl_margin_ratio, hr_margin_ratio, vr_margin_ratio, */keys[i], descs[i]);
 	}
 }
 
@@ -116,8 +127,8 @@ void FeatureProc::MatchFeature(
 	const std::vector<std::vector<SiftGPU::SiftKeypoint>> &keys2,
 	const std::vector<std::vector<float>> &descs1,
 	const std::vector<std::vector<float>> &descs2,
-	const double distmax,
-	const double ratiomax,
+	//const double distmax,
+	//const double ratiomax,
 	std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> &matches){
 	int m1 = keys1.size();
 	int m2 = keys2.size();
@@ -126,7 +137,7 @@ void FeatureProc::MatchFeature(
 		for (int j = 0; j < m2; ++j){
 			//std::cout << "View# " << i << ", " << j << "..." << std::endl;
 			std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>> matches_;
-			MatchFeatureSingleView(keys1[i], keys2[j], descs1[i], descs2[j], distmax, ratiomax, matches_);
+			MatchFeatureSingleView(keys1[i], keys2[j], descs1[i], descs2[j], /*distmax, ratiomax, */matches_);
 			matches[i][j] = matches_;
 		}
 	}
@@ -145,12 +156,12 @@ double FeatureProc::SSD(
 	cv::Rect roi2 = cv::Rect(u2 - N, v2 - N, 2 * N + 1, 2 * N + 1);
 	cv::Mat roiMat2(img2, roi2);
 
-	double sum = 0.0f;
+	double sum = 0.0;
 	int length = 2 * N + 1;
 	if (type == CV_32FC1){
 		for (int i = 0; i < length; ++i){
 			for (int j = 0; j < length; ++j){
-				sum += (roiMat1.at<uchar>(i, j) - roiMat2.at<uchar>(i, j)) * (roiMat1.at<uchar>(i, j) - roiMat2.at<uchar>(i, j));
+				sum += double(roiMat1.at<uchar>(i, j) - roiMat2.at<uchar>(i, j)) * double(roiMat1.at<uchar>(i, j) - roiMat2.at<uchar>(i, j));
 			}
 		}
 		return sqrt(sum / (length * length));
@@ -160,11 +171,11 @@ double FeatureProc::SSD(
 			for (int j = 0; j < length; ++j){
 				cv::Vec3b bgr1 = roiMat1.at<cv::Vec3b>(i, j);
 				cv::Vec3b bgr2 = roiMat2.at<cv::Vec3b>(i, j);
-				sum += (bgr1[0] - bgr2[0]) * (bgr1[0] - bgr2[0]);
-				sum += (bgr1[1] - bgr2[1]) * (bgr1[1] - bgr2[1]);
-				sum += (bgr1[2] - bgr2[2]) * (bgr1[2] - bgr2[2]);
+				sum += double(bgr1[0] - bgr2[0]) * double(bgr1[0] - bgr2[0]);
+				sum += double(bgr1[1] - bgr2[1]) * double(bgr1[1] - bgr2[1]);
+				sum += double(bgr1[2] - bgr2[2]) * double(bgr1[2] - bgr2[2]);
 			}
 		}
-		return sqrt(sum / (length * length * 3));
+		return sqrt(sum / (length * length * 3.0));
 	}
 }

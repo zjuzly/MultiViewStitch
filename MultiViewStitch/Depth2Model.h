@@ -12,7 +12,8 @@ public:
 	void SaveModel(
 		const std::vector<double> &depth,
 		const Camera &cam,
-		const std::string desPath = "");
+		const std::string desPath = "",
+		const bool writeMesh = false);
 public:
 	std::vector<Eigen::Vector3d> point3d;
 	std::vector<Eigen::Vector3i> facets;

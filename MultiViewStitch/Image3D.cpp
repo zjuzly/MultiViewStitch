@@ -4,6 +4,9 @@
 #include "Image3D.h"
 #include "Utils.h"
 #include "Depth2Model.h"
+#include "Alignment.h"
+#include "PlyObj.h"
+#include "ParamParser.h"
 
 #if _DEBUG
 #pragma comment(lib, "D:/opencv/build/x64/vc12/lib/opencv_ts300d.lib")
@@ -45,13 +48,45 @@ void Image3D::LoadDepthMap(const std::string rawpath, std::vector<double> &depth
 }
 
 void Image3D::SolveUnProjectionD(const std::vector<double> &depth){
+	//if (writeMesh){
+	if (ParamParser::writeMesh){
+		double fMinDepth = HUGE_VAL;
+		double fMaxDepth = 1.0 - HUGE_VAL;
+		for (const auto & d : depth){
+			fMinDepth = __min(fMinDepth, d);
+			fMaxDepth = __max(fMaxDepth, d);
+		}
+
+		char fn[128];
+		static int no = 0;
+		sprintf_s(fn, "./mesh%d.obj", no++);
+		Depth2Model d2m = Depth2Model(fMinDepth - 0.0001, fMaxDepth + 0.0001, 0.6);
+		d2m.SaveModel(depth, cam, fn, false);
+
+		std::vector<int> facets(d2m.facets.size() * 3);
+		for (int i = 0; i < d2m.facets.size(); ++i){
+			facets[i * 3] = d2m.facets[i][0];
+			facets[i * 3 + 1] = d2m.facets[i][1];
+			facets[i * 3 + 2] = d2m.facets[i][2];
+		}
+		Alignment align;
+		align.RemoveGround(d2m.point3d, std::vector<Eigen::Vector3d>(), facets);
+		std::vector<Eigen::Vector3f> point3f(d2m.point3d.size());
+		for (int i = 0; i < d2m.point3d.size(); ++i){
+			point3f[i] = d2m.point3d[i].cast<float>();
+		}
+		WriteObj(fn, point3f, std::vector<Eigen::Vector3f>(), facets);
+	}
+
 	int w = cam.W();
 	int h = cam.H();
 	point3d.resize(w * h);
 	valid.resize(w * h, true);
 	for (int i = 0; i < w; ++i){
 		for (int j = 0; j < h; ++j){
-			if (depth[j * w + i] <= 1e-6){
+			//if (depth[j * w + i] <= 1e-6){
+			if(depth[j * w + i] < ParamParser::m_fMinDsp ||
+				depth[j * w + i] > ParamParser::m_fMaxDsp){
 				valid[j * w + i] = false;
 			}
 			else{
@@ -80,14 +115,18 @@ void Image3D::GenNewViews(){
 	K_(2, 0) = 0.0; K_(2, 1) = 0.0; K_(2, 2) = 1.0;
 	//K_ = K.inverse();
 
-	Eigen::Vector3d axis(R(axis, 0), R(axis, 1), R(axis, 2));
+	//Eigen::Vector3d axis(R(axis, 0), R(axis, 1), R(axis, 2));
+	Eigen::Vector3d axis(R(ParamParser::axis, 0), R(ParamParser::axis, 1), R(ParamParser::axis, 2));
 
 	std::vector<double> angle;
-	for (int i = viewCount / 2; i > 0; --i){ angle.push_back(-rotAngle * i); }
-	for (int i = 0; i <= viewCount / 2; ++i){ angle.push_back(rotAngle * i); }
+	//for (int i = viewCount / 2; i > 0; --i){ angle.push_back(-rotAngle * i); }
+	//for (int i = 0; i <= viewCount / 2; ++i){ angle.push_back(rotAngle * i); }
+	for (int i = ParamParser::view_count / 2; i > 0; --i){ angle.push_back(-ParamParser::rot_angle * i); }
+	for (int i = 0; i <= ParamParser::view_count / 2; ++i){ angle.push_back(ParamParser::rot_angle * i); }
 
 	std::cout << "Generating views#: ";
-	for (int k = 0; k < viewCount; ++k){
+	//for (int k = 0; k < viewCount; ++k){
+	for (int k = 0; k < ParamParser::view_count; ++k){
 		std::cout << k << " ";
 
 		std::vector<int> texIndex_(w_ * h_, -1);
@@ -164,7 +203,7 @@ void Image3D::GenNewViews(){
 						rgb[2] = uchar(rgb11[2] * s1 + rgb21[2] * s2 + rgb12[2] * s3 + rgb22[2] * s4);
 					}
 					img.at<cv::Vec3b>(v, u) = rgb;
-					texIndex_[v * w_ + u] = (int(vf) * w_ + int(uf));
+					texIndex_[v * w_ + u] = (int(vf/* + 0.5*/) * w_ + int(uf/* + 0.5*/));
 				}
 			}
 		}

@@ -8,22 +8,22 @@ Depth2Model::Depth2Model(double fMinDepth, double fMaxDepth, double fSmoothThres
 void Depth2Model::SaveModel(
 	const std::vector<double> &depth,
 	const Camera &cam,
-	const std::string desPath){
+	const std::string desPath,
+	const bool writeMesh){
 
-#if WRITE_MESH
-	std::cout << "Save to Model" << std::endl;
-#endif
+	if (writeMesh)
+		std::cout << "Save to Model" << std::endl;
 	int width = cam.W();
 	int height = cam.H();
 
-#if WRITE_MESH
 	std::ofstream ofs;
-	ofs.open(desPath.c_str(), std::ofstream::out | std::ofstream::trunc);
-	if(!ofs.is_open()){
-		std::cerr << "ERROR: Can not open the object file: " << desPath << std::endl;
-		exit(-1);
+	if (writeMesh){
+		ofs.open(desPath.c_str(), std::ofstream::out | std::ofstream::trunc);
+		if (!ofs.is_open()){
+			std::cerr << "ERROR: Can not open the object file: " << desPath << std::endl;
+			exit(-1);
+		}
 	}
-#endif
 	std::vector<std::vector<int>> tab(height, std::vector<int>(width, 0));
 	int tabNum = 0;
 	Eigen::Vector3d p3d;
@@ -35,9 +35,10 @@ void Depth2Model::SaveModel(
 				cam.GetWorldCoordFromImg(x, y, 1.0 / depth[y * width + x], p3d);
 				point3d.push_back(p3d);
 				texIndex.push_back(y * width + x);
-#if WRITE_MESH
-				ofs << "v " << p3d[0] << " " << p3d[1] << " " << p3d[2] << std::endl;
-#endif
+
+				if (writeMesh){
+					ofs << "v " << p3d[0] << " " << p3d[1] << " " << p3d[2] << std::endl;
+				}
 			}
 		}
 	}
@@ -51,24 +52,28 @@ void Depth2Model::SaveModel(
 					fabs(depth[(y + 1) * width + x + 1] - depth[(y + 1) * width + x]) <= threshold &&
 					fabs(depth[y * width + x] - depth[(y + 1) * width + x + 1]) <= threshold){
 					facets.push_back(Eigen::Vector3i(tab[y][x] - 1, tab[y + 1][x] - 1, tab[y + 1][x + 1] - 1));
-#if WRITE_MESH
-					ofs << "f " << tab[y][x] << " " << tab[y + 1][x + 1] << " " << tab[y + 1][x] << std::endl;
-#endif
+
+					if (writeMesh){
+						ofs << "f " << tab[y][x] << " " << tab[y + 1][x] << " " << tab[y + 1][x + 1] << std::endl;
+						//ofs << "f " << tab[y][x] << " " << tab[y + 1][x + 1] << " " << tab[y + 1][x] << std::endl;
+					}
 				}
 				if(tab[y][x + 1] != 0 &&
 					fabs(depth[y * width + x] - depth[y * width + x + 1]) <= threshold &&
 					fabs(depth[(y + 1) * width + x + 1] - depth[y * width + x + 1]) <= threshold &&
 					fabs(depth[(y + 1) * width + x + 1] - depth[y * width + x]) <= threshold){
 					facets.push_back(Eigen::Vector3i(tab[y][x] - 1, tab[y + 1][x + 1] - 1, tab[y][x + 1] - 1));
-#if WRITE_MESH
-					ofs << "f " << tab[y][x] << " " << tab[y][x + 1] << " " << tab[y + 1][x + 1] << std::endl;
-#endif
+
+					if (writeMesh){
+						ofs << "f " << tab[y][x] << " " << tab[y + 1][x + 1] << " " << tab[y][x + 1] << std::endl;
+						//ofs << "f " << tab[y][x] << " " << tab[y][x + 1] << " " << tab[y + 1][x + 1] << std::endl;
+					}
 				}
 			}
 		}
 	}
-#if WRITE_MESH
-	ofs.close();
-	std::cout << "Save Done!" << std::endl;
-#endif
+	if (writeMesh){
+		ofs.close();
+		std::cout << "Save Done!" << std::endl;
+	}
 }

@@ -7,58 +7,62 @@
 #include "Vector.h"
 #include "Depth2Model.h"
 #include "Alignment.h"
+#include "ParamParser.h"
 #include <algorithm>
 #include <set>
 #include <unordered_map>
 
 #define PRINT_INFO
 
-void Processor::SetParamFromFile(const std::string filename){
-	std::ifstream ifs;
-	ifs.open(filename.c_str(), std::ifstream::in);
-	if (!ifs.is_open()){
-		std::cerr << "ERROR: Open File " << filename << " Failed in File " << __FILE__ << ", Line " << __LINE__ << std::endl;
-		exit(-1);
-	}
-	std::string tip;
-	std::string imgPathListFile;
-	while (ifs.peek() != EOF){
-		ifs >> tip;
-		if (tip.size() == 0 || (tip.size() > 0 && tip[0] == '#')) continue;
-		if ("ViewCount"			 == tip){ ifs >> view_count;		}
-		else if ("MinMatchCount" == tip){ ifs >> min_match_count;	}
-		else if ("IterNum"		 == tip){ ifs >> iter_num;			}
-		else if ("SampleIterval" == tip){ ifs >> sample_interval;	}
-		else if ("SSDWin"		 == tip){ ifs >> ssd_win;			}
-		else if ("Axis"			 == tip){ ifs >> axis;				}
-		else if ("RotAngle"		 == tip){ ifs >> rot_angle;			}
-		else if ("PixelError"	 == tip){ ifs >> pixel_err;			}
-		else if ("SSDError"		 == tip){ ifs >> ssd_err;			}
-		else if ("DistMax"		 == tip){ ifs >> distmax;			}
-		else if ("RatioMax"		 == tip){ ifs >> ratiomax;			}
-		else if ("HMarginRatio"  == tip){ ifs >> h_margin_ratio;	}
-		else if ("VMarginRatio"  == tip){ ifs >> v_margin_ratio;	}
-		else if ("MinDsp"		 == tip){ ifs >> m_fMinDsp;			}
-		else if ("MaxDsp"		 == tip){ ifs >> m_fMaxDsp;			}
-		else if ("ImgPathList"	 == tip){ ifs >> imgPathListFile;	}
-	}
-	ifs.close();
-
-	ifs.open(imgPathListFile.c_str(), std::ifstream::in);
-	if (!ifs.is_open()){
-		std::cerr << "ERROR: Open File " << imgPathListFile << " Failed in File " << __FILE__ << ", Line " << __LINE__ << std::endl;
-		exit(-1);
-	}
-	std::vector<std::string>().swap(imgdirs);
-	while (ifs.peek() != EOF){
-		std::string imgdir;
-		ifs >> imgdir;
-		if (imgdir.size() == 0) continue;
-		else if (imgdir[0] == '#') continue;
-		imgdirs.push_back(imgdir);
-	}
-	ifs.close();
-}
+//void Processor::SetParamFromFile(const std::string filename){
+//	std::ifstream ifs;
+//	ifs.open(filename.c_str(), std::ifstream::in);
+//	if (!ifs.is_open()){
+//		std::cerr << "ERROR: Open File " << filename << " Failed in File " << __FILE__ << ", Line " << __LINE__ << std::endl;
+//		exit(-1);
+//	}
+//	std::string tip;
+//	std::string imgPathListFile;
+//	while (ifs.peek() != EOF){
+//		ifs >> tip;
+//		if (tip.size() == 0 || (tip.size() > 0 && tip[0] == '#')) continue;
+//		if ("WriteMesh"			 == tip){ ifs >> writeMesh;			}
+//		else if ("ViewCount"	 == tip){ ifs >> view_count;		}
+//		else if ("MinMatchCount" == tip){ ifs >> min_match_count;	}
+//		else if ("IterNum"		 == tip){ ifs >> iter_num;			}
+//		else if ("SampleIterval" == tip){ ifs >> sample_interval;	}
+//		else if ("SSDWin"		 == tip){ ifs >> ssd_win;			}
+//		else if ("Axis"			 == tip){ ifs >> axis;				}
+//		else if ("RotAngle"		 == tip){ ifs >> rot_angle;			}
+//		else if ("PixelError"	 == tip){ ifs >> pixel_err;			}
+//		else if ("SSDError"		 == tip){ ifs >> ssd_err;			}
+//		else if ("DistMax"		 == tip){ ifs >> distmax;			}
+//		else if ("RatioMax"		 == tip){ ifs >> ratiomax;			}
+//		else if ("HLMarginRatio" == tip){ ifs >> hl_margin_ratio;	}
+//		else if ("VLMarginRatio" == tip){ ifs >> vl_margin_ratio;	}
+//		else if ("HRMarginRatio" == tip){ ifs >> hr_margin_ratio;	}
+//		else if ("VRMarginRatio" == tip){ ifs >> vr_margin_ratio;	}
+//		else if ("MinDsp"		 == tip){ ifs >> m_fMinDsp;			}
+//		else if ("MaxDsp"		 == tip){ ifs >> m_fMaxDsp;			}
+//		else if ("ImgPathList"	 == tip){ ifs >> imgPathListFile;	}
+//	}
+//	ifs.close();
+//
+//	ifs.open(imgPathListFile.c_str(), std::ifstream::in);
+//	if (!ifs.is_open()){
+//		std::cerr << "ERROR: Open File " << imgPathListFile << " Failed in File " << __FILE__ << ", Line " << __LINE__ << std::endl;
+//		exit(-1);
+//	}
+//	std::vector<std::string>().swap(imgdirs);
+//	while (ifs.peek() != EOF){
+//		std::string imgdir;
+//		ifs >> imgdir;
+//		if (imgdir.size() == 0) continue;
+//		else if (imgdir[0] == '#') continue;
+//		imgdirs.push_back(imgdir);
+//	}
+//	ifs.close();
+//}
 
 void Processor::RemoveDupPoints(
 	const std::vector<Image3D> &im,
@@ -70,13 +74,15 @@ void Processor::RemoveDupPoints(
 	int w = im[0].GetWidth();
 	int h = im[0].GetHeight();
 	for (int i = 0; i < matches.size(); ++i){
-		int frmNo1 = i / view_count;
+		//int frmNo1 = i / view_count;
+		int frmNo1 = i / ParamParser::view_count;
 		for (int j = 0; j < matches[i].size(); ++j){
-			int frmNo2 = j / view_count;
+			//int frmNo2 = j / view_count;
+			int frmNo2 = j / ParamParser::view_count;
 			for (int k = 0; k < matches[i][j].size(); ++k){
 				std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[i][j][k];
-				int idx1 = im[frmNo1].GetTexIndex(i % view_count, pr.first[0], pr.first[1]);
-				int idx2 = jm[frmNo2].GetTexIndex(j % view_count, pr.second[0], pr.second[1]);
+				int idx1 = im[frmNo1].GetTexIndex(i % ParamParser::view_count, pr.first[0], pr.first[1]);
+				int idx2 = jm[frmNo2].GetTexIndex(j % ParamParser::view_count, pr.second[0], pr.second[1]);
 				if (idx1 != -1 && idx2 != -1 && im[frmNo1].IsValid(pr.first[0], pr.first[1]) && jm[frmNo2].IsValid(pr.second[0], pr.second[1])){
 					uniqueMatches[frmNo1][frmNo2].insert(std::make_pair(Vec2i(idx1 % w, idx1 / w), Vec2i(idx2 % w, idx2 / w)));
 				}
@@ -86,7 +92,8 @@ void Processor::RemoveDupPoints(
 	std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>>().swap(matches);
 	matches.resize(im.size(), std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>(jm.size()));
 
-	double pixelErr = sample_interval * sample_interval;
+	//double pixelErr = sample_interval * sample_interval;
+	double pixelErr = ParamParser::sample_interval * ParamParser::sample_interval;
 	for (int i = 0; i < matches.size(); ++i){
 		for (int j = 0; j < matches[i].size(); ++j){
 			std::set<std::pair<Vec2i, Vec2i>>::iterator it = uniqueMatches[i][j].begin();
@@ -144,7 +151,7 @@ void Processor::RemoveOutliers(
 		double scale_;
 		Eigen::Matrix3d R_;
 		Eigen::Vector3d t_;
-		SRTSolver solver(80);
+		SRTSolver solver(150);
 		solver.SetPrintFlag(false);
 		solver.SetInput(matchPoints, im.GetCamera(), jm.GetCamera());
 		solver.EstimateTransform(scale_, R_, t_);
@@ -170,7 +177,8 @@ void Processor::RemoveOutliers(
 				sqrt((u1_ - u2_) * (u1_ - u2_) + (v1_ - v2_) * (v1_ - v2_))) * 0.5;
 			//double pixel_err_ = sqrt((u1 - u2) * (u1 - u2) + (v1 - v2) * (v1 - v2));
 			err_all_ += pixel_err_;
-			if (pixel_err_ <= pixel_err){
+			//if (pixel_err_ <= pixel_err){
+			if (pixel_err_ <= ParamParser::pixel_err){
 				matchPoints[newSize] = matchPoints[i];
 				matches[newSize++] = matches[i];
 				err_inlier_ += pixel_err_;
@@ -319,59 +327,59 @@ void Processor::CalcSimilarityTransformation(
 
 	std::vector<std::pair<Eigen::Vector3d, Eigen::Vector3d>> matchPoints;
 #pragma region //Generate Views
-	std::string actsfile1 = imgdirs[0] + "seq.act";
+	std::string actsfile1 = ParamParser::imgdirs[0] + "seq.act";
 	std::vector<Camera> cameras1 = LoadCalibrationFromActs(actsfile1);
-	std::vector<Image3D> im(cameras1.size(), Image3D(view_count, axis, rot_angle));
-	CreateDir(imgdirs[0] + "Views/");
+	std::vector<Image3D> im(cameras1.size(), Image3D(/*view_count, axis, rot_angle*/));
+	CreateDir(ParamParser::imgdirs[0] + "Views/");
 	for (int i = 0; i < im.size(); ++i){
 		char imgpath[128], rawpath[128];
-		sprintf_s(imgpath, "%s%05d.jpg", imgdirs[0].c_str(), i);
-		sprintf_s(rawpath, "%sDATA/_depth%d.raw", imgdirs[0].c_str(), i);
+		sprintf_s(imgpath, "%s%05d.jpg", ParamParser::imgdirs[0].c_str(), i);
+		sprintf_s(rawpath, "%sDATA/_depth%d.raw", ParamParser::imgdirs[0].c_str(), i);
 		im[i].LoadModel(imgpath, rawpath, cameras1[i]);
 	}
 
-	std::string actsfile2 = imgdirs[1] + "seq.act";
+	std::string actsfile2 = ParamParser::imgdirs[1] + "seq.act";
 	std::vector<Camera> cameras2 = LoadCalibrationFromActs(actsfile2);
-	std::vector<Image3D> jm(cameras2.size(), Image3D(view_count, axis, rot_angle));
-	CreateDir(imgdirs[1] + "Views/");
+	std::vector<Image3D> jm(cameras2.size(), Image3D(/*view_count, axis, rot_angle*/));
+	CreateDir(ParamParser::imgdirs[1] + "Views/");
 	for (int i = 0; i < (int)jm.size(); ++i){
 		char imgpath[128], rawpath[128];
-		sprintf_s(imgpath, "%s%05d.jpg", imgdirs[1].c_str(), i);
-		sprintf_s(rawpath, "%sDATA/_depth%d.raw", imgdirs[1].c_str(), i);
+		sprintf_s(imgpath, "%s%05d.jpg", ParamParser::imgdirs[1].c_str(), i);
+		sprintf_s(rawpath, "%sDATA/_depth%d.raw", ParamParser::imgdirs[1].c_str(), i);
 		jm[i].LoadModel(imgpath, rawpath, cameras2[i]);
 	}
 #pragma endregion
 
 #pragma region //Feature Detecting
-	CreateDir(imgdirs[0] + "Views/Sift/");
+	CreateDir(ParamParser::imgdirs[0] + "Views/Sift/");
 	char fn[128];
 	std::vector<std::string> proj_view_path1;// = ScanNSortDirectory((imgdir1 + "Views/").c_str(), "jpg");
 	for (int i = 0; i < cameras1.size(); ++i){
-		for (int j = 0; j < view_count; ++j){
-			sprintf_s(fn, "%sViews/proj%d_%d.jpg", imgdirs[0].c_str(), i, j);
+		for (int j = 0; j < ParamParser::view_count; ++j){
+			sprintf_s(fn, "%sViews/proj%d_%d.jpg", ParamParser::imgdirs[0].c_str(), i, j);
 			proj_view_path1.push_back(fn);
 		}
 	}
 	std::vector<std::vector<SiftGPU::SiftKeypoint>> keys1;
 	std::vector<std::vector<float>> descs1;
-	FeatureProc::DetectFeature(proj_view_path1, h_margin_ratio, v_margin_ratio, keys1, descs1);
+	FeatureProc::DetectFeature(proj_view_path1, /*hl_margin_ratio, vl_margin_ratio, hr_margin_ratio, vr_margin_ratio, */keys1, descs1);
 
-	CreateDir(imgdirs[1] + "Views/Sift/");
+	CreateDir(ParamParser::imgdirs[1] + "Views/Sift/");
 	std::vector<std::string> proj_view_path2;// = ScanNSortDirectory((imgdir2 + "Views/").c_str(), "jpg");
 	for (int i = 0; i < cameras2.size(); ++i){
-		for (int j = 0; j < view_count; ++j){
-			sprintf_s(fn, "%sViews/proj%d_%d.jpg", imgdirs[1].c_str(), i, j);
+		for (int j = 0; j < ParamParser::view_count; ++j){
+			sprintf_s(fn, "%sViews/proj%d_%d.jpg", ParamParser::imgdirs[1].c_str(), i, j);
 			proj_view_path2.push_back(fn);
 		}
 	}
 	std::vector<std::vector<SiftGPU::SiftKeypoint>> keys2;
 	std::vector<std::vector<float>> descs2;
-	FeatureProc::DetectFeature(proj_view_path2, h_margin_ratio, v_margin_ratio, keys2, descs2);
+	FeatureProc::DetectFeature(proj_view_path2, /*hl_margin_ratio, vl_margin_ratio, hr_margin_ratio, vr_margin_ratio, */keys2, descs2);
 #pragma endregion
 
 #pragma region //Feature Matching
 	std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> matches;
-	FeatureProc::MatchFeature(keys1, keys2, descs1, descs2, distmax, ratiomax, matches);
+	FeatureProc::MatchFeature(keys1, keys2, descs1, descs2, /*distmax, ratiomax, */matches);
 	RemoveDupPoints(im, jm, matches);
 
 	double err = std::numeric_limits<double>::max();
@@ -379,11 +387,11 @@ void Processor::CalcSimilarityTransformation(
 	int maxMatchCount = 0, frmIdx1, frmIdx2;
 	for (int i = 0; i < matches.size(); ++i){
 		for (int j = 0; j < matches[i].size(); ++j){
-			if (matches[i][j].size() < min_match_count) continue;
+			if (matches[i][j].size() < ParamParser::min_match_count) continue;
 			double res_err = HUGE_VAL;
 			double inlier_ratio_ = 0.0;
 			RemoveOutliers(im[i], jm[j], inlier_ratio_, res_err, matches[i][j]);
-			if (res_err < err && matches[i][j].size() >= min_match_count){
+			if (res_err < err && matches[i][j].size() >= ParamParser::min_match_count){
 				maxMatchCount = matches[i][j].size();
 				err = res_err;
 				frmIdx1 = i;
@@ -391,7 +399,7 @@ void Processor::CalcSimilarityTransformation(
 			}
 		}
 	}
-	if (maxMatchCount < min_match_count){
+	if (maxMatchCount < ParamParser::min_match_count){
 		std::cerr << "No Enough Sift Feature Matches! File " << __FILE__ << ", Line " << __LINE__ << std::endl;
 		exit(-1);
 	}
@@ -410,12 +418,12 @@ void Processor::CalcSimilarityTransformation(
 	std::vector<cv::Mat> img2(jm.size());
 	for (int i = 0; i < img1.size(); ++i){
 		char imgpath[128];
-		sprintf_s(imgpath, "%s%05d.jpg", imgdirs[0].c_str(), i);
+		sprintf_s(imgpath, "%s%05d.jpg", ParamParser::imgdirs[0].c_str(), i);
 		img1[i] = cv::imread(imgpath);
 	}
 	for (int i = 0; i < img2.size(); ++i){
 		char imgpath[128];
-		sprintf_s(imgpath, "%s%05d.jpg", imgdirs[1].c_str(), i);
+		sprintf_s(imgpath, "%s%05d.jpg", ParamParser::imgdirs[1].c_str(), i);
 		img2[i] = cv::imread(imgpath);
 	}
 	for (int i = 0; i < matches.size(); ++i){
@@ -441,7 +449,7 @@ void Processor::CalcSimilarityTransformation(
 #endif
 #pragma endregion
 
-	SRTSolver solver(iter_num);
+	SRTSolver solver(ParamParser::iter_num);
 	solver.SetInput(matchPoints, cameras1[frmIdx1], cameras2[frmIdx2]);
 	solver.EstimateTransform(scale, R, t);
 }
@@ -457,16 +465,16 @@ void Processor::CalcSimilarityTransformationSeq(
 	std::vector<std::vector<std::pair<Eigen::Vector3d, Eigen::Vector3d>>> matchPoints;
 
 #pragma region //Generate Views
-	std::vector<std::vector<Image3D>> models(imgdirs.size());
+	std::vector<std::vector<Image3D>> models(ParamParser::imgdirs.size());
 	for (int k = 0; k < models.size(); ++k){
 		//std::string actsfile = imgdirs[k] + "seq.act";
 		//std::vector<Camera> cameras = LoadCalibrationFromActs(actsfile);
-		models[k].resize(cameras[k].size(), Image3D(view_count, axis, rot_angle));
-		CreateDir(imgdirs[k] + "Views/");
+		models[k].resize(cameras[k].size(), Image3D(/*view_count, axis, rot_angle, writeMesh*/));
+		CreateDir(ParamParser::imgdirs[k] + "Views/");
 		for (int i = 0; i < models[k].size(); ++i){
 			char imgpath[128], rawpath[128];
-			sprintf_s(imgpath, "%s%05d.jpg", imgdirs[k].c_str(), i);
-			sprintf_s(rawpath, "%sDATA/_depth%d.raw", imgdirs[k].c_str(), i);
+			sprintf_s(imgpath, "%s%05d.jpg", ParamParser::imgdirs[k].c_str(), i);
+			sprintf_s(rawpath, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
 			models[k][i].LoadModel(imgpath, rawpath, cameras[k][i]);
 		}
 	}
@@ -477,7 +485,7 @@ void Processor::CalcSimilarityTransformationSeq(
 		imgs[k].resize(models[k].size());
 		for (int i = 0; i < imgs[k].size(); ++i){
 			char imgpath[128];
-			sprintf_s(imgpath, "%s%05d.jpg", imgdirs[k].c_str(), i);
+			sprintf_s(imgpath, "%s%05d.jpg", ParamParser::imgdirs[k].c_str(), i);
 			imgs[k][i] = cv::imread(imgpath);
 		}
 	}
@@ -486,22 +494,23 @@ void Processor::CalcSimilarityTransformationSeq(
 	std::vector<std::vector<std::vector<SiftGPU::SiftKeypoint>>> keys(models.size());
 	std::vector<std::vector<std::vector<float>>> descs(models.size());
 	for (int k = 0; k < models.size(); ++k){
-		CreateDir(imgdirs[k] + "Views/Sift/");
-		CreateDir(imgdirs[k] + "Views/Sift1/");
+		CreateDir(ParamParser::imgdirs[k] + "Views/Sift/");
+		CreateDir(ParamParser::imgdirs[k] + "Views/Sift1/");
 		std::vector<std::string> proj_view_path;
 		for (int i = 0; i < models[k].size(); ++i){
-			for (int j = 0; j < view_count; ++j){
-				sprintf_s(fn, "%sViews/proj%d_%d.jpg", imgdirs[k].c_str(), i, j);
+			for (int j = 0; j < ParamParser::view_count; ++j){
+				sprintf_s(fn, "%sViews/proj%d_%d.jpg", ParamParser::imgdirs[k].c_str(), i, j);
 				proj_view_path.push_back(fn);
 			}
 		}
-		FeatureProc::DetectFeature(proj_view_path, h_margin_ratio, v_margin_ratio, keys[k], descs[k]);
-		
+		FeatureProc::DetectFeature(proj_view_path, /*hl_margin_ratio, vl_margin_ratio, hr_margin_ratio, vr_margin_ratio, */keys[k], descs[k]);
+
+		/*-------------------------Remove Background Points-------------------------*/
 #if 1
 		//remove background points
 		for (int i = 0; i < keys[k].size(); ++i){ //sequence
-			const int curfrmIdx = i / view_count;
-			const int view = i % view_count;
+			const int curfrmIdx = i / ParamParser::view_count;
+			const int view = i % ParamParser::view_count;
 			const Image3D &curIm = models[k][curfrmIdx];
 			const int w = curIm.GetWidth();
 			const int h = curIm.GetHeight();
@@ -535,10 +544,11 @@ void Processor::CalcSimilarityTransformationSeq(
 			descs[k][i].resize(newSize * 128);
 		}
 #endif
-		
+		/*-------------------------Remove Background Points-------------------------*/
+
 		for (int i = 0; i < keys[k].size(); ++i){
-			const int frmIdx = i / view_count;
-			const int view = i % view_count;
+			//const int frmIdx = i / ParamParser::view_count;
+			//const int view = i % ParamParser::view_count;
 			const std::string imgpath = proj_view_path[i];
 			cv::Mat img1 = cv::imread(imgpath);
 			for (const auto & kp : keys[k][i]){
@@ -562,12 +572,13 @@ void Processor::CalcSimilarityTransformationSeq(
 	Rs.resize(models.size() - 1);
 	ts.resize(models.size() - 1);
 
+	std::vector<std::pair<int, int>> selectFrames;
 	for (int k = 0; k < models.size() - 1; ++k){
 		std::cout << "|-------------------- Seq " << k << " ----> " << k + 1 << "--------------------|" << std::endl;
 
 		/*-----------------------------Feature Matching-----------------------------*/
 		std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> matches;
-		FeatureProc::MatchFeature(keys[k], keys[k + 1], descs[k], descs[k + 1], distmax, ratiomax, matches);
+		FeatureProc::MatchFeature(keys[k], keys[k + 1], descs[k], descs[k + 1], /*distmax, ratiomax, */matches);
 		/*-----------------------------Feature Matching-----------------------------*/
 
 		const int w = models[k][0].GetWidth();
@@ -586,13 +597,13 @@ void Processor::CalcSimilarityTransformationSeq(
 		std::vector<std::vector<std::set<std::pair<Vec2i, Vec2i>>>> uniqueMatches(model1.size(),
 			std::vector<std::set<std::pair<Vec2i, Vec2i>>>(model2.size()));
 		for (int i = 0; i < matches.size(); ++i){
-			int frmNo1 = i / view_count;
+			int frmNo1 = i / ParamParser::view_count;
 			for (int j = 0; j < matches[i].size(); ++j){
-				int frmNo2 = j / view_count;
+				int frmNo2 = j / ParamParser::view_count;
 				for (int k = 0; k < matches[i][j].size(); ++k){
 					std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[i][j][k];
-					int idx1 = model1[frmNo1].GetTexIndex(i % view_count, pr.first[0], pr.first[1]);
-					int idx2 = model2[frmNo2].GetTexIndex(j % view_count, pr.second[0], pr.second[1]);
+					int idx1 = model1[frmNo1].GetTexIndex(i % ParamParser::view_count, pr.first[0], pr.first[1]);
+					int idx2 = model2[frmNo2].GetTexIndex(j % ParamParser::view_count, pr.second[0], pr.second[1]);
 					if (idx1 != -1 && idx2 != -1 && model1[frmNo1].IsValid(pr.first[0], pr.first[1]) && model2[frmNo2].IsValid(pr.second[0], pr.second[1])){
 						uniqueMatches[frmNo1][frmNo2].insert(std::make_pair(Vec2i(idx1 % w, idx1 / w), Vec2i(idx2 % w, idx2 / w)));
 					}
@@ -614,6 +625,8 @@ void Processor::CalcSimilarityTransformationSeq(
 		/*-------------------------Remove Duplicate Points--------------------------*/
 #endif
 		/*----------------------------------SSD Error-------------------------------*/
+		int &ssd_win = ParamParser::ssd_win;
+		double &ssd_err = ParamParser::ssd_err;
 		for (int i = 0; i < matches.size(); ++i){
 			for (int j = 0; j < matches[i].size(); ++j){
 				int newSize = 0;
@@ -639,7 +652,7 @@ void Processor::CalcSimilarityTransformationSeq(
 		/*----------------------------------SSD Error-------------------------------*/
 #if 1
 		/*----------------------------------Gap Error-------------------------------*/
-		const double pixelGap = sample_interval * sample_interval;
+		const double pixelGap = ParamParser::sample_interval * ParamParser::sample_interval;
 		for (int i = 0; i < matches.size(); ++i){
 			for (int j = 0; j < matches[i].size(); ++j){
 				int k0 = 0, newSize = 0;
@@ -682,11 +695,11 @@ void Processor::CalcSimilarityTransformationSeq(
 		int maxMatchCount = 0, frmIdx1, frmIdx2;
 		for (int i = 0; i < matches.size(); ++i){
 			for (int j = 0; j < matches[i].size(); ++j){
-				if (matches[i][j].size() < min_match_count) continue;
+				if (matches[i][j].size() < ParamParser::min_match_count) continue;
 				double inlier_ratio_ = 0.0;
 				double res_err = HUGE_VAL;
 				RemoveOutliers(model1[i], model2[j], inlier_ratio_, res_err, matches[i][j]);
-				if (res_err < err && matches[i][j].size() >= min_match_count){
+				if (res_err < err && matches[i][j].size() >= ParamParser::min_match_count){
 					maxMatchCount = matches[i][j].size();
 					err = res_err;
 					inlier_ratio = inlier_ratio_;
@@ -723,13 +736,14 @@ void Processor::CalcSimilarityTransformationSeq(
 			}
 		}
 #endif
-		if (maxMatchCount < min_match_count){
+		if (maxMatchCount < ParamParser::min_match_count){
 			std::cout << "sift match: " << maxMatchCount << std::endl;
 			std::cout << "residual error: " << err << std::endl;
 			std::cout << "inlier ratio: " << inlier_ratio << std::endl;
 			std::cerr << "No Enough Sift Feature Matches! File " << __FILE__ << ", Line " << __LINE__ << std::endl;
 			exit(-1);
 		}
+		selectFrames.push_back(std::make_pair(frmIdx1, frmIdx2));
 		std::cout << "selected keyframe: " << frmIdx1 << " " << frmIdx2 << std::endl;
 		std::cout << "sift match: " << matches[frmIdx1][frmIdx2].size() << std::endl;
 		std::cout << "residual error: " << err << std::endl;
@@ -742,7 +756,7 @@ void Processor::CalcSimilarityTransformationSeq(
 		}
 
 		/*----------------------------------Solve SRT-------------------------------*/
-		SRTSolver solver(iter_num);
+		SRTSolver solver(ParamParser::iter_num);
 		solver.SetInput(matchPoints[k], model1[frmIdx1].GetCamera(), model2[frmIdx2].GetCamera());
 		solver.SetPrintFlag(false);
 		solver.EstimateTransform(scales[k], Rs[k], ts[k]);
@@ -756,15 +770,19 @@ void Processor::CalcSimilarityTransformationSeq(
 		/*----------------------------------Solve SRT-------------------------------*/
 	}
 #pragma endregion
+	std::cout << "|------------------------------------------|" << std::endl;
+	for (int k = 0; k < selectFrames.size(); ++k){
+		std::cout << "Seq " << k << " --> " << k + 1 << ": " << selectFrames[k].first << ", " << selectFrames[k].second << std::endl;
+	}
+	std::cout << "|------------------------------------------|" << std::endl;
 }
 
 void Processor::AlignmentSeq(){
 	srand((unsigned int)time(NULL));
 
-	std::vector<std::vector<Camera>> cameras(imgdirs.size());
+	std::vector<std::vector<Camera>> cameras(ParamParser::imgdirs.size());
 	for (int k = 0; k < cameras.size(); ++k){
-		//std::string actsfile = imgdirs[k] + "seq.act";
-		std::vector<std::string> actsfiles = ScanNSortDirectory(imgdirs[k].c_str(), "act");
+		std::vector<std::string> actsfiles = ScanNSortDirectory(ParamParser::imgdirs[k].c_str(), "act");
 		cameras[k] = LoadCalibrationFromActs(actsfiles[0]);
 	}
 
@@ -787,15 +805,16 @@ void Processor::AlignmentSeq(){
 		std::cout << "Translation: " << std::endl;
 		std::cout << ts[k].transpose() << std::endl;
 	}
+
 	char fn[128];
 	std::vector<std::string> rawpaths;
-	for (int k = 0; k < imgdirs.size(); ++k){
+	for (int k = 0; k < ParamParser::imgdirs.size(); ++k){
 		int frmNoHalf = cameras[k].size() / 2;
 		const Camera cam = cameras[k][frmNoHalf];
 		int w = cam.W();
 		int h = cam.H();
 
-		sprintf_s(fn, "%sDATA/_depth%d.raw", imgdirs[k].c_str(), frmNoHalf);
+		sprintf_s(fn, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), frmNoHalf);
 
 		std::vector<double> dsp(w * h);
 		float *raw = new float[w * h];
@@ -805,7 +824,7 @@ void Processor::AlignmentSeq(){
 
 		for (int i = 0; i < w * h; ++i) dsp[i] = raw[i];
 
-		Depth2Model d2m(m_fMinDsp, m_fMaxDsp, 0.4);
+		Depth2Model d2m(ParamParser::m_fMinDsp, ParamParser::m_fMaxDsp, 0.12);
 		d2m.SaveModel(dsp, cam);
 
 		std::vector<Eigen::Vector3d> &point3d = d2m.point3d;
@@ -819,6 +838,7 @@ void Processor::AlignmentSeq(){
 #if 1
 		int newSize = 0;
 		std::unordered_map<int, int> mp;
+#if 1
 		for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
 			const Eigen::Vector3d &p3d = point3d[pIdx];
 			bool removed = false;
@@ -838,6 +858,37 @@ void Processor::AlignmentSeq(){
 				newSize++;
 			}
 		}
+#else
+		for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
+			const Eigen::Vector3d &p3d = point3d[pIdx];
+			bool removed = false;
+			for (int k0 = 0; k0 < imgdirs.size(); ++k0){
+				Eigen::Vector3d p3d_ = p3d;
+				if (k0 != k){
+					double scale = 1.0 / scales[k0] * scales[k];
+					Eigen::Matrix3d R = Rs[k0].transpose() * Rs[k];
+					Eigen::Vector3d t = 1.0 / scales[k0] * Rs[k0].transpose() * (ts[k] - ts[k0]);
+					p3d_ = scale * R * p3d + t;
+				}
+				for (int cIdx = 0; cIdx < cameras[k0].size(); ++cIdx){
+					if (k0 != k || cIdx != frmNoHalf){
+						int u, v;
+						cameras[k0][cIdx].GetImgCoordFromWorld(p3d_, u, v);
+						if (!CheckRange(u, v, w, h)){
+							removed = true;
+							break;
+						}
+					}
+				}
+				if (removed) break;
+			}
+			if (!removed){
+				point3d[newSize] = point3d[pIdx];
+				mp[pIdx] = newSize;
+				newSize++;
+			}
+		}
+#endif
 		std::cout << newSize << " | " << point3d.size() << std::endl;
 		point3d.resize(newSize);
 
