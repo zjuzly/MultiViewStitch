@@ -7,3 +7,5 @@
 *.obj
 *.rar
 *.jpg
+*.npts
+*.ply

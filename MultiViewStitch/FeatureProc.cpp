@@ -13,10 +13,6 @@
 
 void FeatureProc::DetectFeatureSingleView(
 	const std::string imgpath,
-	//const double hl_margin_ratio,
-	//const double vl_margin_ratio,
-	//const double hr_margin_ratio,
-	//const double vr_margin_ratio,
 	std::vector<SiftGPU::SiftKeypoint> &keys, 
 	std::vector<float> &descs){
 	SiftGPU *sift = new SiftGPU;
@@ -83,8 +79,6 @@ void FeatureProc::MatchFeatureSingleView(
 	const std::vector<SiftGPU::SiftKeypoint> &keys2,
 	const std::vector<float> &descs1,
 	const std::vector<float> &descs2,
-	//const double distmax,
-	//const double ratiomax,
 	std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>> &matches){
 	SiftMatchGPU *matcher = new SiftMatchGPU(4096);
 	matcher->VerifyContextGL();
@@ -100,7 +94,7 @@ void FeatureProc::MatchFeatureSingleView(
 	for (int i = 0; i < num_match; ++i){
 		const SiftGPU::SiftKeypoint & key1 = keys1[match_buf[i][0]];
 		const SiftGPU::SiftKeypoint & key2 = keys2[match_buf[i][1]];
-		matches[i] = std::make_pair(Eigen::Vector2i(int(key1.x/* + 0.5*/), int(key1.y/* + 0.5*/)), Eigen::Vector2i(int(key2.x/* + 0.5*/), int(key2.y/* + 0.5*/)));
+		matches[i] = std::make_pair(Eigen::Vector2i(int(key1.x + 0.5), int(key1.y + 0.5)), Eigen::Vector2i(int(key2.x + 0.5), int(key2.y + 0.5)));
 	}
 
 	delete[]match_buf;
@@ -109,16 +103,12 @@ void FeatureProc::MatchFeatureSingleView(
 
 void FeatureProc::DetectFeature(
 	const std::vector<std::string> imgpaths,
-	//const double hl_margin_ratio,
-	//const double vl_margin_ratio,
-	//const double hr_margin_ratio,
-	//const double vr_margin_ratio,
 	std::vector<std::vector<SiftGPU::SiftKeypoint>> &keys,
 	std::vector<std::vector<float>> &descs){
 	keys.resize(imgpaths.size());
 	descs.resize(imgpaths.size());
 	for (int i = 0; i < (int)imgpaths.size(); ++i){
-		DetectFeatureSingleView(imgpaths[i], /*hl_margin_ratio, vl_margin_ratio, hr_margin_ratio, vr_margin_ratio, */keys[i], descs[i]);
+		DetectFeatureSingleView(imgpaths[i], keys[i], descs[i]);
 	}
 }
 
@@ -127,8 +117,6 @@ void FeatureProc::MatchFeature(
 	const std::vector<std::vector<SiftGPU::SiftKeypoint>> &keys2,
 	const std::vector<std::vector<float>> &descs1,
 	const std::vector<std::vector<float>> &descs2,
-	//const double distmax,
-	//const double ratiomax,
 	std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> &matches){
 	int m1 = keys1.size();
 	int m2 = keys2.size();
@@ -137,7 +125,7 @@ void FeatureProc::MatchFeature(
 		for (int j = 0; j < m2; ++j){
 			//std::cout << "View# " << i << ", " << j << "..." << std::endl;
 			std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>> matches_;
-			MatchFeatureSingleView(keys1[i], keys2[j], descs1[i], descs2[j], /*distmax, ratiomax, */matches_);
+			MatchFeatureSingleView(keys1[i], keys2[j], descs1[i], descs2[j], matches_);
 			matches[i][j] = matches_;
 		}
 	}

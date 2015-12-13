@@ -4,27 +4,16 @@
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
-#include <cv.h>
-#include <highgui.h>
+#include <opencv2\opencv.hpp>
 #include "Camera.h"
 
 class Image3D{
 public:
-	Image3D(
-		/*int viewCount_ = 1, 
-		int axis_ = 0, 
-		double rotAngle_ = 0.0,
-		bool writeMesh_ = false*/){ 
-		//frmNo = 0; 
-		//viewCount = viewCount_; 
-		//axis = axis_; 
-		//rotAngle = rotAngle_;
-		//writeMesh = writeMesh_;
-	}
+	Image3D(){}
 	void LoadModel(const std::string imgpath, const std::string rawpath, const Camera &cam);
-	//int GetViewCount() const{ return viewCount; }
 	int GetTexIndex(int view, int x, int y) const{ return texIndex[view][y * cam.W() + x]; }
 	bool IsValid(int x, int y) const{ return valid[y * cam.W() + x]; }
+	bool InMask(int x, int y) const{ return !!(mask.at<uchar>(y, x)); }
 	Eigen::Vector3d GetPoint(int x, int y) const{ return point3d[y * cam.W() + x]; }
 	Eigen::Vector3d GetPointCam(int x, int y) const{
 		Eigen::Vector3d p3d_c;
@@ -40,11 +29,8 @@ private:
 	void GenNewViews();
 private:
 	int frmNo;
-	//int viewCount;
-	//int axis;
-	//double rotAngle;
-	//bool writeMesh;
 	cv::Mat image;
+	cv::Mat mask;
 	Camera cam;
 	std::string path;
 	std::vector<std::vector<int>> texIndex;

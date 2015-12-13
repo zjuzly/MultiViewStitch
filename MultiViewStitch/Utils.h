@@ -12,7 +12,9 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <Eigen/Dense>
+#include <opencv2\opencv.hpp>
 
 
 inline bool CheckRange(const int u, const int v, const int w, const int h){
@@ -56,7 +58,7 @@ static std::vector<std::string> ScanNSortDirectory(const char* path, const char*
 	int nbFiles = 0;
 
 	searchPath = std::string(path) + "*." + std::string(ext);
-	std::cout << searchPath << std::endl;
+	//std::cout << searchPath << std::endl;
 	hHandle = FindFirstFile(_T(searchPath.c_str()), &wfd);
 
 	if (INVALID_HANDLE_VALUE == hHandle){
@@ -152,4 +154,58 @@ static void AxisAngleTransform(const Eigen::Vector3d axis, const double angle, c
 
 #pragma endregion
 
+//Serialization
+#pragma region
+static void LoadDepth(const std::string filename, std::vector<double> &depth, int w, int h){
+	std::vector<double>().swap(depth);
+	depth.resize(w * h);
+	float *raw = new float[w * h];
+	std::ifstream ifs(filename.c_str(), std::ifstream::in | std::ifstream::binary);
+	ifs.read((char*)raw, w * h * sizeof(float));
+	for (int i = 0; i < w * h; ++i){ depth[i] = raw[i]; }
+	ifs.close();
+	delete[]raw;
+}
+static void SaveDepth(const std::string filename, std::vector<double> &depth){
+	std::ofstream ofs(filename.c_str(), std::ofstream::out | std::ofstream::binary);
+	int size = depth.size();
+	float *pData = new float[size];
+	for (int i = 0; i < size; ++i){ pData[i] = depth[i]; }
+	ofs.write((char*)pData, sizeof(float)* size);
+	ofs.close();
+	delete[]pData;
+}
+#pragma endregion
+
+#pragma region //Render View
+static void RenderDepthMap(
+	const std::string filename,
+	const std::vector<double> &depth,
+	int w, int h
+	){
+	if (depth.size() <= 0)	return;
+
+	float d_min = HUGE_VAL;
+	float d_max = 1 - HUGE_VAL;
+	for (int i = 0; i < depth.size(); ++i){
+		if (depth[i] >= 0){
+			d_min = __min(d_min, depth[i]);
+			d_max = __max(d_max, depth[i]);
+		}
+	}
+	cv::Mat gray(h, w, CV_8UC1);
+	for (int j = 0; j < h; ++j){
+		for (int i = 0; i < w; ++i){
+			if (depth[j * w + i] >= 0){
+				uchar val = uchar(255 * (depth[j * w + i] - d_min) / (d_max - d_min));
+				gray.at<uchar>(j, i) = 255 - val;
+			}
+			else{
+				gray.at<uchar>(j, i) = 0;
+			}
+		}
+	}
+	cv::imwrite(filename, gray);
+}
+#pragma endregion
 #endif

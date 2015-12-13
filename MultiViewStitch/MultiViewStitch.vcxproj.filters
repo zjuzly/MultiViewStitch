@@ -54,6 +54,9 @@
     <ClInclude Include="ParamParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GeometryRec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -84,6 +87,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ParamParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryRec.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

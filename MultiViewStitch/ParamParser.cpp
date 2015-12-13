@@ -3,6 +3,7 @@
 #include <fstream>
 
 bool ParamParser::writeMesh = false;
+bool ParamParser::isSegment = false;
 
 int ParamParser::view_count = 1;
 int ParamParser::min_match_count = 5;
@@ -23,6 +24,16 @@ double ParamParser::vr_margin_ratio = 0.25;
 double ParamParser::m_fMinDsp = 0.0001;
 double ParamParser::m_fMaxDsp = 0.5;
 
+int ParamParser::sample_radius = 2;
+int ParamParser::nbr_frm_num = 5;
+int ParamParser::nbr_frm_step = 1;
+int ParamParser::psn_dpt_max = 10;
+int ParamParser::psn_dpt_min = 7;
+
+double ParamParser::dsp_err = 0.01;
+double ParamParser::conf_min = 0.6;
+double ParamParser::edge_sz_thres = 4.0;
+
 std::vector<std::string> ParamParser::imgdirs = std::vector<std::string>();
 
 void ParamParser::setParamFromFile(const std::string filename){
@@ -38,6 +49,7 @@ void ParamParser::setParamFromFile(const std::string filename){
 		ifs >> tip;
 		if (tip.size() == 0 || (tip.size() > 0 && tip[0] == '#')) continue;
 		if ("WriteMesh" == tip){ ifs >> writeMesh; }
+		else if ("Segment" == tip){ ifs >> isSegment; }
 		else if ("ViewCount" == tip){ ifs >> view_count; }
 		else if ("MinMatchCount" == tip){ ifs >> min_match_count; }
 		else if ("IterNum" == tip){ ifs >> iter_num; }
@@ -56,6 +68,14 @@ void ParamParser::setParamFromFile(const std::string filename){
 		else if ("MinDsp" == tip){ ifs >> m_fMinDsp; }
 		else if ("MaxDsp" == tip){ ifs >> m_fMaxDsp; }
 		else if ("ImgPathList" == tip){ ifs >> imgPathListFile; }
+		else if ("PtSampRds" == tip){ ifs >> sample_radius; }
+		else if ("NbrFrmNum" == tip){ ifs >> nbr_frm_num; }
+		else if ("NbrFrmStep" == tip){ ifs >> nbr_frm_step; }
+		else if ("MaxDspErr" == tip){ ifs >> dsp_err; }
+		else if ("MinConf" == tip){ ifs >> conf_min; }
+		else if ("EdgeSzThres" == tip){ ifs >> edge_sz_thres; }
+		else if ("PsnDptMax" == tip){ ifs >> psn_dpt_max; }
+		else if ("PsnDptMin" == tip){ ifs >> psn_dpt_min; }
 	}
 	ifs.close();
 

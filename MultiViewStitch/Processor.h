@@ -7,9 +7,16 @@
 
 class Processor{
 public:
-	//void SetParamFromFile(const std::string filename);
 	void AlignmentSeq();
+	void CheckConsistency(const std::vector<std::vector<Camera>> &cameras);
 private:
+	/**
+	*/
+	void CheckConsistencyCore(
+		const Camera curcam,
+		const std::vector<Camera> refcams,
+		std::vector<double> &depth_out,
+		const std::vector<std::vector<double>> &refdepth);
 	void RemoveDupPoints(
 		const std::vector<Image3D> &im,
 		const std::vector<Image3D> &jm,
@@ -38,30 +45,8 @@ private:
 		const std::vector<std::vector<Camera>> &cameras,
 		std::vector<double> &scales,
 		std::vector<Eigen::Matrix3d> &Rs,
-		std::vector<Eigen::Vector3d> &ts);
-private:
-	//bool writeMesh;
-
-	//int view_count; //1
-	//int min_match_count; //10
-	//int iter_num; //100
-	//int sample_interval; //40
-	//int ssd_win; //7
-	//int axis; //x: 0, y: 1, z: 2
-	//
-	//double rot_angle;
-	//double ssd_err;
-	//double pixel_err;
-	//double distmax; //0.5
-	//double ratiomax; //0.5
-	//double hl_margin_ratio; //0.15
-	//double hr_margin_ratio; //0.15
-	//double vl_margin_ratio; //0.15
-	//double vr_margin_ratio; //0.15
-	//double m_fMinDsp;
-	//double m_fMaxDsp;
-
-	//std::vector<std::string> imgdirs;
+		std::vector<Eigen::Vector3d> &ts/*,
+		std::vector<std::pair<int, int>> &selectFrames*/);
 };
 
 #endif

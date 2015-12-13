@@ -8,7 +8,9 @@ class ParamParser{
 public:
 	static void setParamFromFile(const std::string filename);
 public:
+	//parameters for alignment
 	static bool writeMesh;
+	static bool isSegment;
 
 	static int view_count; //1
 	static int min_match_count; //10
@@ -30,6 +32,19 @@ public:
 	static double m_fMaxDsp;
 
 	static std::vector<std::string> imgdirs;
+
+	//parameters for reconstruction
+	static int sample_radius;
+	static int nbr_frm_num;
+	static int nbr_frm_step;
+	static int psn_dpt_max;
+	static int psn_dpt_min;
+
+	//static double dsp_min;
+	//static double dsp_max;
+	static double dsp_err;
+	static double conf_min;
+	static double edge_sz_thres;
 };
 
 #endif

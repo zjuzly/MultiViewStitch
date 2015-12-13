@@ -1,6 +1,5 @@
 #include <fstream>
 #include <limits>
-#include <opencv2\opencv.hpp>
 #include "Image3D.h"
 #include "Utils.h"
 #include "Depth2Model.h"
@@ -21,6 +20,36 @@ void Image3D::LoadModel(const std::string imgpath, const std::string rawpath, co
 	this->cam = cam;
 	image = cv::imread(imgpath);
 
+	if (ParamParser::isSegment){
+		double scale = 0.5;
+		cv::Mat imgHalf;
+		cv::resize(image, imgHalf, cv::Size(image.cols * scale, image.rows * scale));
+		//cv::pyrDown(image, imgHalf, image.size() / scale/*cv::Size(image.cols * scale, image.rows * scale)*/);
+		int rowLeft = imgHalf.rows * ParamParser::vl_margin_ratio;
+		int colLeft = imgHalf.cols * ParamParser::hl_margin_ratio;
+		int rowRight = imgHalf.rows * ParamParser::vr_margin_ratio;
+		int colRight = imgHalf.cols * ParamParser::hr_margin_ratio;
+
+		cv::Rect rectangle(colLeft, rowLeft, imgHalf.cols - colRight - colLeft, imgHalf.rows - rowRight - rowLeft);
+
+		cv::Mat bgModel, fgModel;
+		cv::grabCut(imgHalf, mask, rectangle, bgModel, fgModel, 3, cv::GC_INIT_WITH_RECT);
+
+		cv::compare(mask, cv::GC_PR_FGD, mask, cv::CMP_EQ);
+
+		//cv::Mat foreground(imgHalf.size(), CV_8UC3, cv::Scalar(255, 255, 255));
+		//imgHalf.copyTo(foreground, mask);
+
+		cv::resize(mask, mask, image.size());
+		//cv::resize(foreground, foreground, image.size());
+		//cv::pyrUp(mask, mask, image.size());
+		//cv::pyrUp(foreground, foreground, image.size());
+
+		cv::imshow("mask", mask);
+		//cv::imshow("segment", foreground);
+		cv::waitKey(1);
+	}
+
 	int pos = imgpath.find_last_of('/');
 	path = imgpath.substr(0, pos + 1) + "Views/";
 	int pos1 = imgpath.find_last_of('.');
@@ -37,18 +66,18 @@ void Image3D::LoadModel(const std::string imgpath, const std::string rawpath, co
 void Image3D::LoadDepthMap(const std::string rawpath, std::vector<double> &depth){
 	int w = cam.W();
 	int h = cam.H();
-	std::vector<double>().swap(depth);
-	depth.resize(w * h);
-	float *raw = new float[w * h];
-	std::ifstream ifs(rawpath.c_str(), std::ifstream::in | std::ifstream::binary);
-	ifs.read((char*)raw, w * h * sizeof(float));
-	for (int i = 0; i < w * h; ++i){ depth[i] = raw[i]; }
-	delete[]raw;
-	ifs.close();
+	LoadDepth(rawpath, depth, w, h);
+	//std::vector<double>().swap(depth);
+	//depth.resize(w * h);
+	//float *raw = new float[w * h];
+	//std::ifstream ifs(rawpath.c_str(), std::ifstream::in | std::ifstream::binary);
+	//ifs.read((char*)raw, w * h * sizeof(float));
+	//for (int i = 0; i < w * h; ++i){ depth[i] = raw[i]; }
+	//delete[]raw;
+	//ifs.close();
 }
 
 void Image3D::SolveUnProjectionD(const std::vector<double> &depth){
-	//if (writeMesh){
 	if (ParamParser::writeMesh){
 		double fMinDepth = HUGE_VAL;
 		double fMaxDepth = 1.0 - HUGE_VAL;
@@ -84,7 +113,6 @@ void Image3D::SolveUnProjectionD(const std::vector<double> &depth){
 	valid.resize(w * h, true);
 	for (int i = 0; i < w; ++i){
 		for (int j = 0; j < h; ++j){
-			//if (depth[j * w + i] <= 1e-6){
 			if(depth[j * w + i] < ParamParser::m_fMinDsp ||
 				depth[j * w + i] > ParamParser::m_fMaxDsp){
 				valid[j * w + i] = false;
@@ -203,7 +231,7 @@ void Image3D::GenNewViews(){
 						rgb[2] = uchar(rgb11[2] * s1 + rgb21[2] * s2 + rgb12[2] * s3 + rgb22[2] * s4);
 					}
 					img.at<cv::Vec3b>(v, u) = rgb;
-					texIndex_[v * w_ + u] = (int(vf/* + 0.5*/) * w_ + int(uf/* + 0.5*/));
+					texIndex_[v * w_ + u] = (int(vf + 0.5) * w_ + int(uf + 0.5));
 				}
 			}
 		}
