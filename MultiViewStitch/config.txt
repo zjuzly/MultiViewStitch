@@ -4,7 +4,7 @@ MinMatchCount 5
 Segment 0
 WriteMesh 0
 IterNum 100
-SampleIterval 24
+SampleIterval 20
 SSDWin 7
 SSDError 20.0
 Axis 0
@@ -12,10 +12,10 @@ RotAngle 10.0
 PixelError 60
 DistMax 0.7
 RatioMax 0.8
-HLMarginRatio 0.01
-VLMarginRatio 0.2
-HRMarginRatio 0.01
-VRMarginRatio 0.2
+HLMarginRatio 0.2
+VLMarginRatio 0.0
+HRMarginRatio 0.2
+VRMarginRatio 0.0
 MinDsp 0.0025
 MaxDsp 1.0
 
@@ -23,8 +23,8 @@ MaxDsp 1.0
 PtSampRds 2
 NbrFrmNum 1
 NbrFrmStep 1
-MaxDspErr 1.0
-MinConf 0.8
+MaxDspErr 0.01
+MinConf 0.6
 EdgeSzThres 4.0
 PsnDptMax 12
 PsnDptMin 8

@@ -33,7 +33,7 @@ void Image3D::LoadModel(const std::string imgpath, const std::string rawpath, co
 		cv::Rect rectangle(colLeft, rowLeft, imgHalf.cols - colRight - colLeft, imgHalf.rows - rowRight - rowLeft);
 
 		cv::Mat bgModel, fgModel;
-		cv::grabCut(imgHalf, mask, rectangle, bgModel, fgModel, 3, cv::GC_INIT_WITH_RECT);
+		cv::grabCut(imgHalf, mask, rectangle, bgModel, fgModel, 5, cv::GC_INIT_WITH_RECT);
 
 		cv::compare(mask, cv::GC_PR_FGD, mask, cv::CMP_EQ);
 
@@ -67,14 +67,12 @@ void Image3D::LoadDepthMap(const std::string rawpath, std::vector<double> &depth
 	int w = cam.W();
 	int h = cam.H();
 	LoadDepth(rawpath, depth, w, h);
-	//std::vector<double>().swap(depth);
-	//depth.resize(w * h);
-	//float *raw = new float[w * h];
-	//std::ifstream ifs(rawpath.c_str(), std::ifstream::in | std::ifstream::binary);
-	//ifs.read((char*)raw, w * h * sizeof(float));
-	//for (int i = 0; i < w * h; ++i){ depth[i] = raw[i]; }
-	//delete[]raw;
-	//ifs.close();
+
+	//int pos = rawpath.find_last_of('/');
+	//char fn[128];
+	//sprintf_s(fn, "%s_depth%d.jpg", rawpath.substr(0, pos + 1).c_str(), frmNo);
+	//std::cout << fn << std::endl;
+	//RenderDepthMap(fn, depth, w, h);
 }
 
 void Image3D::SolveUnProjectionD(const std::vector<double> &depth){

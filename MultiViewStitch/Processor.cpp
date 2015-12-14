@@ -35,8 +35,8 @@ void Processor::CheckConsistency(const std::vector<std::vector<Camera>> &cameras
 			std::vector<std::vector<double>> refdepths;
 			std::vector<Camera> refcams;
 			std::cout << std::endl << "Image#" << i << " Depth Consistency check..." << std::endl;
-			for (int j = 0; j < 5; ++j){
-				int idx = i - 2 + j;
+			for (int j = 0; j < 3/*2 * ParamParser::nbr_frm_num + 1*/; ++j){
+				int idx = i - 1/*ParamParser::nbr_frm_num*/ + j;
 				if (idx >= 0 && idx < n && idx != i){
 					refdepths.push_back(depths[idx]);
 					refcams.push_back(cameras[k][idx]);
@@ -493,9 +493,7 @@ void Processor::CalcSimilarityTransformationSeq(
 	const std::vector<std::vector<Camera>> &cameras,
 	std::vector<double> &scales,
 	std::vector<Eigen::Matrix3d> &Rs,
-	std::vector<Eigen::Vector3d> &ts/*,
-	std::vector<std::pair<int, int>> &selectFrames
-	*/){
+	std::vector<Eigen::Vector3d> &ts){
 
 	char fn[128];
 	std::vector<std::vector<std::pair<Eigen::Vector3d, Eigen::Vector3d>>> matchPoints;
@@ -823,17 +821,11 @@ void Processor::AlignmentSeq(){
 	std::vector<Eigen::Vector3d> ts;
 
 	std::vector<std::pair<int, int>> selectFramesPair;
-	CalcSimilarityTransformationSeq(cameras, scales, Rs, ts/*, selectFramesPair*/);
+	CalcSimilarityTransformationSeq(cameras, scales, Rs, ts);
 
 	scales.push_back(1.0);
 	Rs.push_back(Eigen::Matrix3d::Identity());
 	ts.push_back(Eigen::Vector3d::Zero());
-
-	//std::vector<int> selectFrames;
-	//for (int i = 0; i < selectFramesPair.size(); ++i){
-	//	selectFrames.push_back(selectFramesPair[i].first);
-	//}
-	//selectFrames.push_back(selectFramesPair.back().second);
 
 	int size = scales.size();
 	for (int k = 0; k < size; ++k){
@@ -847,116 +839,21 @@ void Processor::AlignmentSeq(){
 	}
 
 	char fn[128];
-#if 0
-	std::vector<std::string> rawpaths;
-	for (int k = 0; k < ParamParser::imgdirs.size(); ++k){
-		int frmNoHalf = cameras[k].size() / 2;
-		//int frmNoHalf = selectFrames[k];
-		const Camera cam = cameras[k][frmNoHalf];
-		int w = cam.W();
-		int h = cam.H();
-
-		sprintf_s(fn, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), frmNoHalf);
-
-		std::vector<double> dsp(w * h);
-		float *raw = new float[w * h];
-		std::ifstream ifs(fn, std::ifstream::in | std::ifstream::binary);
-		ifs.read((char*)raw, w * h * sizeof(float));
-		ifs.close();
-
-		for (int i = 0; i < w * h; ++i) dsp[i] = raw[i];
-
-		Depth2Model d2m(ParamParser::m_fMinDsp, ParamParser::m_fMaxDsp, 0.12);
-		d2m.SaveModel(dsp, cam);
-
-		std::vector<Eigen::Vector3d> &point3d = d2m.point3d;
-		std::vector<int> facets(d2m.facets.size() * 3);
-		for (int i = 0; i < d2m.facets.size(); ++i){
-			facets[i * 3] = d2m.facets[i][0];
-			facets[i * 3 + 1] = d2m.facets[i][1];
-			facets[i * 3 + 2] = d2m.facets[i][2];
-		}
-
-		int newSize = 0;
-		std::unordered_map<int, int> mp;
-#if 1
-		for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
-			const Eigen::Vector3d &p3d = point3d[pIdx];
-			bool removed = false;
-			for (int cIdx = 0; cIdx < cameras[k].size(); ++cIdx){
-				if (cIdx != frmNoHalf){
-					int u, v;
-					cameras[k][cIdx].GetImgCoordFromWorld(p3d, u, v);
-					if (!CheckRange(u, v, w, h)){
-						removed = true;
-						break;
-					}
-				}
-			}
-			if (!removed){
-				point3d[newSize] = point3d[pIdx];
-				mp[pIdx] = newSize;
-				newSize++;
-			}
-		}
-#else
-		for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
-			const Eigen::Vector3d &p3d = point3d[pIdx];
-			bool removed = false;
-			for (int k0 = 0; k0 < imgdirs.size(); ++k0){
-				Eigen::Vector3d p3d_ = p3d;
-				if (k0 != k){
-					double scale = 1.0 / scales[k0] * scales[k];
-					Eigen::Matrix3d R = Rs[k0].transpose() * Rs[k];
-					Eigen::Vector3d t = 1.0 / scales[k0] * Rs[k0].transpose() * (ts[k] - ts[k0]);
-					p3d_ = scale * R * p3d + t;
-				}
-				for (int cIdx = 0; cIdx < cameras[k0].size(); ++cIdx){
-					if (k0 != k || cIdx != frmNoHalf){
-						int u, v;
-						cameras[k0][cIdx].GetImgCoordFromWorld(p3d_, u, v);
-						if (!CheckRange(u, v, w, h)){
-							removed = true;
-							break;
-						}
-					}
-				}
-				if (removed) break;
-			}
-			if (!removed){
-				point3d[newSize] = point3d[pIdx];
-				mp[pIdx] = newSize;
-				newSize++;
-			}
-		}
-#endif
-		std::cout << newSize << " | " << point3d.size() << std::endl;
-		point3d.resize(newSize);
-
-		std::vector<int> facets_;
-		for (int fIdx = 0; fIdx < facets.size(); fIdx += 3){
-			if (mp.count(facets[fIdx]) && mp.count(facets[fIdx + 1]) && mp.count(facets[fIdx + 2])){
-				facets_.push_back(mp[facets[fIdx]]);
-				facets_.push_back(mp[facets[fIdx + 1]]);
-				facets_.push_back(mp[facets[fIdx + 2]]);
-			}
-		}
-		std::swap(facets, facets_);
-
-		Alignment align;
-		align.RemoveGround(point3d, std::vector<Eigen::Vector3d>(), facets);
-
-		std::vector<Eigen::Vector3f> point3f(point3d.size());
-		for (int i = 0; i < point3d.size(); ++i){
-			point3f[i] = (scales[k] * Rs[k] * point3d[i] + ts[k]).cast<float>();
-		}
-		sprintf_s(fn, "./ans%d.obj", k);
-		WriteObj(fn, point3f, std::vector<Eigen::Vector3f>(), facets);
-	}
-#else
 	std::vector<std::vector<Eigen::Vector3d>> points(ParamParser::imgdirs.size());
 	std::vector<std::vector<Eigen::Vector3d>> normals(ParamParser::imgdirs.size());
 	for (int k = 0; k < ParamParser::imgdirs.size(); ++k){
+		//CreateDir(ParamParser::imgdirs[k] + "DATA/TMP/");
+		//char fn1[128], fn2[128];
+		//for (int i = 0; i < cameras[k].size(); ++i){
+		//	sprintf_s(fn1, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	sprintf_s(fn2, "%sDATA/TMP/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		//}
+		//for (int i = 0; i < cameras[k].size(); ++i){
+		//	sprintf_s(fn1, "%sDATA/CHECK/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	sprintf_s(fn2, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		//}
 		std::vector<std::string> actsfiles = ScanNSortDirectory(ParamParser::imgdirs[k].c_str(), "act");
 		GeometryRec gr;
 		gr.Init(
@@ -1018,10 +915,20 @@ void Processor::AlignmentSeq(){
 			if (!removed){
 				points[k][newSize] = points[k][pIdx];
 				normals[k][newSize] = normals[k][pIdx];
-				//mp[pIdx] = newSize;
 				newSize++;
 			}
 		}
+
+		//for (int i = 0; i < cameras[k].size(); ++i){
+		//	sprintf_s(fn1, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	sprintf_s(fn2, "%sDATA/CHECK/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		//}
+		//for (int i = 0; i < cameras[k].size(); ++i){
+		//	sprintf_s(fn1, "%sDATA/TMP/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	sprintf_s(fn2, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		//}
 	}
 
 	std::vector<std::vector<Eigen::Vector3f>> point3f(ParamParser::imgdirs.size());
@@ -1068,5 +975,5 @@ void Processor::AlignmentSeq(){
 		ParamParser::psn_dpt_min
 		);
 	gr.RunPoisson("./");
-#endif
+
 }
