@@ -1,5 +1,4 @@
 #include "Depth2Model.h"
-#include "Vector.h"
 #include <fstream>
 
 Depth2Model::Depth2Model(double fMinDepth, double fMaxDepth, double fSmoothThreshold) :

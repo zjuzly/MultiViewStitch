@@ -1,6 +1,6 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
-#include "Image3D.h"
+#include "../Image3D/Image3D.h"
 #include <Eigen/Dense>
 #include <vector>
 #include <string>
@@ -45,8 +45,7 @@ private:
 		const std::vector<std::vector<Camera>> &cameras,
 		std::vector<double> &scales,
 		std::vector<Eigen::Matrix3d> &Rs,
-		std::vector<Eigen::Vector3d> &ts/*,
-		std::vector<std::pair<int, int>> &selectFrames*/);
+		std::vector<Eigen::Vector3d> &ts);
 };
 
 #endif

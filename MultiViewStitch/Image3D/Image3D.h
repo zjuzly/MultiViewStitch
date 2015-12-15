@@ -5,7 +5,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <opencv2\opencv.hpp>
-#include "Camera.h"
+#include "../Camera/Camera.h"
 
 class Image3D{
 public:

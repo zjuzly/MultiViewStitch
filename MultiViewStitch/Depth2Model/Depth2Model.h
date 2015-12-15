@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "Camera.h"
+#include "../Camera/Camera.h"
 
 class Depth2Model{
 public:

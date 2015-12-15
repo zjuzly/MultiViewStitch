@@ -1,6 +1,4 @@
 #include "GeometryRec.h"
-#include "ParamParser.h"
-#include "Utils.h"
 
 #ifdef _DEBUG
 #pragma comment(lib, "E:/3rdPart/VideoMat/zly/lib/GeoRec_d.lib")

@@ -15,85 +15,86 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h">
+    <ClInclude Include="Solver\SRTSolver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vector.h">
+    <ClInclude Include="Camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
+    <ClInclude Include="FeatureProc\FeatureProc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Image3D.h">
+    <ClInclude Include="Image3D\Image3D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Depth2Model.h">
+    <ClInclude Include="SetUtils\PointSetUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FeatureProc.h">
+    <ClInclude Include="SetUtils\UnionSetUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Processor.h">
+    <ClInclude Include="Alignment\Alignment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRTSolver.h">
+    <ClInclude Include="Depth2Model\Depth2Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PlyObj.h">
+    <ClInclude Include="Reconstruction\GeometryRec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Matrix.h">
+    <ClInclude Include="Parameter\ParamParser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UnionSetUtils.h">
+    <ClInclude Include="Common\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Alignment.h">
+    <ClInclude Include="Common\PlyObj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParamParser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeometryRec.h">
+    <ClInclude Include="Processor\Processor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Image3D.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Depth2Model.cpp">
+    <ClCompile Include="Solver\SRTSolver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FeatureProc.cpp">
+    <ClCompile Include="Camera\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SRTSolver.cpp">
+    <ClCompile Include="FeatureProc\FeatureProc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Processor.cpp">
+    <ClCompile Include="Image3D\Image3D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UnionSetUtils.cpp">
+    <ClCompile Include="SetUtils\PointSetUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Alignment.cpp">
+    <ClCompile Include="SetUtils\UnionSetUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ParamParser.cpp">
+    <ClCompile Include="Alignment\Alignment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryRec.cpp">
+    <ClCompile Include="Depth2Model\Depth2Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Reconstruction\GeometryRec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Parameter\ParamParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Processor\Processor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="config.txt" />
+    <Text Include="imgPathList.txt" />
   </ItemGroup>
 </Project>

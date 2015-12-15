@@ -17,6 +17,7 @@ public:
 	static int iter_num; //100
 	static int sample_interval; //40
 	static int ssd_win; //7
+	static int reproj_err; //4
 	static int axis; //x: 0, y: 1, z: 2
 
 	static double rot_angle;
@@ -45,6 +46,8 @@ public:
 	static double dsp_err;
 	static double conf_min;
 	static double edge_sz_thres;
+
+	static double dist_thres;
 };
 
 #endif

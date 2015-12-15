@@ -10,6 +10,7 @@ int ParamParser::min_match_count = 5;
 int ParamParser::iter_num = 100;
 int ParamParser::sample_interval = 24;
 int ParamParser::ssd_win = 7;
+int ParamParser::reproj_err = 4;
 int ParamParser::axis = 0;
 
 double ParamParser::rot_angle = 10.0;
@@ -33,6 +34,8 @@ int ParamParser::psn_dpt_min = 7;
 double ParamParser::dsp_err = 0.01;
 double ParamParser::conf_min = 0.6;
 double ParamParser::edge_sz_thres = 4.0;
+
+double ParamParser::dist_thres = 0.7;
 
 std::vector<std::string> ParamParser::imgdirs = std::vector<std::string>();
 
@@ -59,6 +62,7 @@ void ParamParser::setParamFromFile(const std::string filename){
 		else if ("RotAngle" == tip){ ifs >> rot_angle; }
 		else if ("PixelError" == tip){ ifs >> pixel_err; }
 		else if ("SSDError" == tip){ ifs >> ssd_err; }
+		else if ("ReprojError" == tip){ ifs >> reproj_err; }
 		else if ("DistMax" == tip){ ifs >> distmax; }
 		else if ("RatioMax" == tip){ ifs >> ratiomax; }
 		else if ("HLMarginRatio" == tip){ ifs >> hl_margin_ratio; }
@@ -76,6 +80,7 @@ void ParamParser::setParamFromFile(const std::string filename){
 		else if ("EdgeSzThres" == tip){ ifs >> edge_sz_thres; }
 		else if ("PsnDptMax" == tip){ ifs >> psn_dpt_max; }
 		else if ("PsnDptMin" == tip){ ifs >> psn_dpt_min; }
+		else if ("DistThreshold" == tip){ ifs >> dist_thres; }
 	}
 	ifs.close();
 

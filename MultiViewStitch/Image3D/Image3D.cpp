@@ -1,11 +1,11 @@
 #include <fstream>
 #include <limits>
 #include "Image3D.h"
-#include "Utils.h"
-#include "Depth2Model.h"
-#include "Alignment.h"
-#include "PlyObj.h"
-#include "ParamParser.h"
+#include "../Common/Utils.h"
+#include "../Common/PlyObj.h"
+#include "../Depth2Model/Depth2Model.h"
+#include "../Alignment/Alignment.h"
+#include "../Parameter/ParamParser.h"
 
 #if _DEBUG
 #pragma comment(lib, "D:/opencv/build/x64/vc12/lib/opencv_ts300d.lib")
@@ -33,7 +33,7 @@ void Image3D::LoadModel(const std::string imgpath, const std::string rawpath, co
 		cv::Rect rectangle(colLeft, rowLeft, imgHalf.cols - colRight - colLeft, imgHalf.rows - rowRight - rowLeft);
 
 		cv::Mat bgModel, fgModel;
-		cv::grabCut(imgHalf, mask, rectangle, bgModel, fgModel, 5, cv::GC_INIT_WITH_RECT);
+		cv::grabCut(imgHalf, mask, rectangle, bgModel, fgModel, 3, cv::GC_INIT_WITH_RECT);
 
 		cv::compare(mask, cv::GC_PR_FGD, mask, cv::CMP_EQ);
 
@@ -145,13 +145,10 @@ void Image3D::GenNewViews(){
 	Eigen::Vector3d axis(R(ParamParser::axis, 0), R(ParamParser::axis, 1), R(ParamParser::axis, 2));
 
 	std::vector<double> angle;
-	//for (int i = viewCount / 2; i > 0; --i){ angle.push_back(-rotAngle * i); }
-	//for (int i = 0; i <= viewCount / 2; ++i){ angle.push_back(rotAngle * i); }
 	for (int i = ParamParser::view_count / 2; i > 0; --i){ angle.push_back(-ParamParser::rot_angle * i); }
 	for (int i = 0; i <= ParamParser::view_count / 2; ++i){ angle.push_back(ParamParser::rot_angle * i); }
 
 	std::cout << "Generating views#: ";
-	//for (int k = 0; k < viewCount; ++k){
 	for (int k = 0; k < ParamParser::view_count; ++k){
 		std::cout << k << " ";
 

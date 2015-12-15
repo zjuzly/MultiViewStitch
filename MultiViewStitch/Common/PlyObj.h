@@ -152,10 +152,11 @@ static void ReadPly(
 
 static void WriteObj(
 	const std::string filename,
-	const std::vector<Eigen::Vector3f> points,
-	const std::vector<Eigen::Vector3f> normals = std::vector<Eigen::Vector3f>(),
-	const std::vector<int> faces = std::vector<int>()
+	const std::vector<Eigen::Vector3f> &points,
+	const std::vector<Eigen::Vector3f> &normals = std::vector<Eigen::Vector3f>(),
+	const std::vector<int> &faces = std::vector<int>()
 	){
+		//std::cout << filename << std::endl;
 		using namespace std;
 		ofstream ofs;
 		ofs.open(filename.c_str(), ofstream::out);
@@ -214,60 +215,89 @@ static void WriteObj(
 		ofs.close();
 }
 
+static void WriteObj(
+	const std::string filename,
+	const std::vector<Eigen::Vector3d> &points,
+	const std::vector<Eigen::Vector3d> &normals = std::vector<Eigen::Vector3d>(),
+	const std::vector<int> &facets = std::vector<int>()){
+
+	std::vector<Eigen::Vector3f> pointsf(points.size());
+	for (int i = 0; i < points.size(); ++i){ pointsf[i] = points[i].cast<float>(); }
+	std::vector<Eigen::Vector3f> normalsf(normals.size());
+	for (int i = 0; i < normals.size(); ++i){ normalsf[i] = normals[i].cast<float>(); }
+
+	WriteObj(filename, pointsf, normalsf, facets);
+}
+
 static void ReadObj(
 	const std::string filename,
 	std::vector<Eigen::Vector3f> &points,
 	std::vector<Eigen::Vector3f> &normals = std::vector<Eigen::Vector3f>(),
 	std::vector<int> &facets = std::vector<int>()){
 
-		points.clear();
-		normals.clear();
-		facets.clear();
-		std::ifstream ifs;
-		ifs.open(filename.c_str(), std::ifstream::in);
-		if(!ifs.is_open()){
-			std::cerr << "ERROR: Open File " << filename << " Failed! Please check if it exists" << std::endl;
-			exit(-1);
-		}
-		char line[512];
-		while(ifs.peek() != EOF){
-			ifs.getline(line, 512);
-			if(line[0] == '#')	continue;
-			if(line[0] == 'v'){
-				float x, y, z;
-				if(line[1] == 'n'){
-					sscanf_s(line, "vn %f %f %f", &x, &y, &z);
-					normals.push_back(Eigen::Vector3f(x, y, z));
-					//normals.back().Normalize();
-					normals.back().normalize();
-				}else{
-					sscanf_s(line, "v %f %f %f", &x, &y, &z);
-					points.push_back(Eigen::Vector3f(x, y, z));
-				}
-			}
-			if(line[0] == 'f'){
-				int ptIdx[3], nIdx[3];
-				if(normals.size() > 0){
-					sscanf_s(line, "f %d//%d %d//%d %d//%d", &ptIdx[0], &nIdx[0], &ptIdx[1], &nIdx[1], &ptIdx[2], &nIdx[2]);
-					//facets.push_back(Eigen::Vector3i(ptIdx[0] - 1, ptIdx[1] - 1, ptIdx[2] - 1));
-					facets.push_back(ptIdx[0] - 1);
-					facets.push_back(ptIdx[1] - 1);
-					facets.push_back(ptIdx[2] - 1);
-				}else{
-					sscanf_s(line, "f %d %d %d", &ptIdx[0], &ptIdx[1], &ptIdx[2]);
-					//facets.push_back(Eigen::Vector3i(ptIdx[0] - 1, ptIdx[1] - 1, ptIdx[2] - 1));
-					facets.push_back(ptIdx[0] - 1);
-					facets.push_back(ptIdx[1] - 1);
-					facets.push_back(ptIdx[2] - 1);
-				}
+	//std::cout << filename << std::endl;
+	points.clear();
+	normals.clear();
+	facets.clear();
+	std::ifstream ifs;
+	ifs.open(filename.c_str(), std::ifstream::in);
+	if(!ifs.is_open()){
+		std::cerr << "ERROR: Open File " << filename << " Failed! Please check if it exists" << std::endl;
+		exit(-1);
+	}
+	char line[512];
+	while(ifs.peek() != EOF){
+		ifs.getline(line, 512);
+		if(line[0] == '#')	continue;
+		if(line[0] == 'v'){
+			float x, y, z;
+			if(line[1] == 'n'){
+				sscanf_s(line, "vn %f %f %f", &x, &y, &z);
+				normals.push_back(Eigen::Vector3f(x, y, z));
+				//normals.back().Normalize();
+				normals.back().normalize();
+			}else{
+				sscanf_s(line, "v %f %f %f", &x, &y, &z);
+				points.push_back(Eigen::Vector3f(x, y, z));
 			}
 		}
+		if(line[0] == 'f'){
+			int ptIdx[3], nIdx[3];
+			if (normals.size() > 0 && std::string(line).find('/') != std::string::npos){
+				sscanf_s(line, "f %d//%d %d//%d %d//%d", &ptIdx[0], &nIdx[0], &ptIdx[1], &nIdx[1], &ptIdx[2], &nIdx[2]);
+				facets.push_back(ptIdx[0] - 1);
+				facets.push_back(ptIdx[1] - 1);
+				facets.push_back(ptIdx[2] - 1);
+			}
+			else{
+				sscanf_s(line, "f %d %d %d", &ptIdx[0], &ptIdx[1], &ptIdx[2]);
+				facets.push_back(ptIdx[0] - 1);
+				facets.push_back(ptIdx[1] - 1);
+				facets.push_back(ptIdx[2] - 1);
+			}
+		}
+	}
 		
-		//std::cout << "Read points: " << points.size() << std::endl;
-		//std::cout << "Read normals: " << normals.size() << std::endl;
-		//std::cout << "Read facets: " << facets.size() / 3 << std::endl;
+	//std::cout << "Read points: " << points.size() << std::endl;
+	//std::cout << "Read normals: " << normals.size() << std::endl;
+	//std::cout << "Read facets: " << facets.size() / 3 << std::endl;
 
-		ifs.close();
+	ifs.close();
+}
+
+static void ReadObj(
+	const std::string filename,
+	std::vector<Eigen::Vector3d> &points,
+	std::vector<Eigen::Vector3d> &normals = std::vector<Eigen::Vector3d>(),
+	std::vector<int> &facets = std::vector<int>()){
+
+	std::vector<Eigen::Vector3f> pointsf, normalsf;
+	ReadObj(filename, pointsf, normalsf, facets);
+
+	points.resize(pointsf.size());
+	for (int i = 0; i < pointsf.size(); ++i){ points[i] = pointsf[i].cast<double>(); }
+	normals.resize(normalsf.size());
+	for (int i = 0; i < normalsf.size(); ++i){ normals[i] = normalsf[i].cast<double>(); }
 }
 
 #endif

@@ -3,7 +3,7 @@
 #include <time.h>
 #include <vector>
 #include <Eigen/Dense>
-#include "Camera.h"
+#include "../Camera/Camera.h"
 
 class SRTSolver{
 public:

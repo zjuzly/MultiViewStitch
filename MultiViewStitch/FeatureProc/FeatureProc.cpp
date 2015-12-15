@@ -1,6 +1,6 @@
 #include "FeatureProc.h"
-#include "Utils.h"
-#include "ParamParser.h"
+#include "../Common/Utils.h"
+#include "../Parameter/ParamParser.h"
 #include <GL\glew.h>
 
 #if _DEBUG
@@ -88,7 +88,6 @@ void FeatureProc::MatchFeatureSingleView(
 
 	int(*match_buf)[2] = new int[keys1.size()][2];
 	int num_match = matcher->GetSiftMatch(keys1.size(), match_buf, ParamParser::distmax, ParamParser::ratiomax);
-	//std::cout << num_match << " sift matches were found;" << std::endl;
 
 	matches.resize(num_match);
 	for (int i = 0; i < num_match; ++i){
@@ -123,7 +122,6 @@ void FeatureProc::MatchFeature(
 	matches.resize(m1, std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>(m2));
 	for (int i = 0; i < m1; ++i){
 		for (int j = 0; j < m2; ++j){
-			//std::cout << "View# " << i << ", " << j << "..." << std::endl;
 			std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>> matches_;
 			MatchFeatureSingleView(keys1[i], keys2[j], descs1[i], descs2[j], matches_);
 			matches[i][j] = matches_;

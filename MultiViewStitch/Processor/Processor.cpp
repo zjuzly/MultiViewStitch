@@ -1,14 +1,14 @@
-#include "Utils.h"
-#include "Camera.h"
-#include "FeatureProc.h"
-#include "SRTSolver.h"
-#include "PlyObj.h"
-#include "Processor.h"
-#include "Vector.h"
-#include "Depth2Model.h"
-#include "Alignment.h"
-#include "ParamParser.h"
-#include "GeometryRec.h"
+#include "../Common/Utils.h"
+#include "../Common/PlyObj.h"
+#include "../Vector/Vector.h"
+#include "../Camera/Camera.h"
+#include "../FeatureProc/FeatureProc.h"
+#include "../Solver/SRTSolver.h"
+#include "../Processor/Processor.h"
+#include "../Depth2Model/Depth2Model.h"
+#include "../Alignment/Alignment.h"
+#include "../Parameter/ParamParser.h"
+#include "../Reconstruction/GeometryRec.h"
 #include <algorithm>
 #include <set>
 #include <unordered_map>
@@ -80,7 +80,7 @@ void Processor::CheckConsistencyCore(
 								break;
 							}
 							double reproj_err = sqrt(double((i - u) * (i - u) + (j - v) * (j - v)));
-							if (reproj_err > 4.0){
+							if (reproj_err > ParamParser::reproj_err){
 								dp = 0.0f;
 								break;
 							}
@@ -578,8 +578,6 @@ void Processor::CalcSimilarityTransformationSeq(
 		/*-------------------------Remove Background Points-------------------------*/
 
 		for (int i = 0; i < keys[k].size(); ++i){
-			//const int frmIdx = i / ParamParser::view_count;
-			//const int view = i % ParamParser::view_count;
 			const std::string imgpath = proj_view_path[i];
 			cv::Mat img1 = cv::imread(imgpath);
 			for (const auto & kp : keys[k][i]){
@@ -609,7 +607,7 @@ void Processor::CalcSimilarityTransformationSeq(
 
 		/*-----------------------------Feature Matching-----------------------------*/
 		std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> matches;
-		FeatureProc::MatchFeature(keys[k], keys[k + 1], descs[k], descs[k + 1], /*distmax, ratiomax, */matches);
+		FeatureProc::MatchFeature(keys[k], keys[k + 1], descs[k], descs[k + 1], matches);
 		/*-----------------------------Feature Matching-----------------------------*/
 
 		const int w = models[k][0].GetWidth();
@@ -633,10 +631,12 @@ void Processor::CalcSimilarityTransformationSeq(
 				int frmNo2 = j / ParamParser::view_count;
 				for (int k = 0; k < matches[i][j].size(); ++k){
 					std::pair<Eigen::Vector2i, Eigen::Vector2i> &pr = matches[i][j][k];
-					int idx1 = model1[frmNo1].GetTexIndex(i % ParamParser::view_count, pr.first[0], pr.first[1]);
-					int idx2 = model2[frmNo2].GetTexIndex(j % ParamParser::view_count, pr.second[0], pr.second[1]);
-					if (idx1 != -1 && idx2 != -1 && model1[frmNo1].IsValid(pr.first[0], pr.first[1]) && model2[frmNo2].IsValid(pr.second[0], pr.second[1])){
-						uniqueMatches[frmNo1][frmNo2].insert(std::make_pair(Vec2i(idx1 % w, idx1 / w), Vec2i(idx2 % w, idx2 / w)));
+					if (CheckRange(pr.first[0], pr.first[1], w, h) && CheckRange(pr.second[0], pr.second[1], w, h)){
+						int idx1 = model1[frmNo1].GetTexIndex(i % ParamParser::view_count, pr.first[0], pr.first[1]);
+						int idx2 = model2[frmNo2].GetTexIndex(j % ParamParser::view_count, pr.second[0], pr.second[1]);
+						if (idx1 != -1 && idx2 != -1 && model1[frmNo1].IsValid(pr.first[0], pr.first[1]) && model2[frmNo2].IsValid(pr.second[0], pr.second[1])){
+							uniqueMatches[frmNo1][frmNo2].insert(std::make_pair(Vec2i(idx1 % w, idx1 / w), Vec2i(idx2 % w, idx2 / w)));
+						}
 					}
 				}
 			}
@@ -700,9 +700,6 @@ void Processor::CalcSimilarityTransformationSeq(
 				}
 				matches[i][j].resize(newSize);
 				size3[i][j] = newSize;
-//#ifdef PRINT_INFO
-//				std::cout << "Frame# " << i << ", " << j << " | " << matches[i][j].size() << " sift matches found" << std::endl;
-//#endif
 			}
 		}
 		/*----------------------------------Gap Error-------------------------------*/
@@ -842,18 +839,18 @@ void Processor::AlignmentSeq(){
 	std::vector<std::vector<Eigen::Vector3d>> points(ParamParser::imgdirs.size());
 	std::vector<std::vector<Eigen::Vector3d>> normals(ParamParser::imgdirs.size());
 	for (int k = 0; k < ParamParser::imgdirs.size(); ++k){
-		//CreateDir(ParamParser::imgdirs[k] + "DATA/TMP/");
-		//char fn1[128], fn2[128];
-		//for (int i = 0; i < cameras[k].size(); ++i){
-		//	sprintf_s(fn1, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	sprintf_s(fn2, "%sDATA/TMP/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
-		//}
-		//for (int i = 0; i < cameras[k].size(); ++i){
-		//	sprintf_s(fn1, "%sDATA/CHECK/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	sprintf_s(fn2, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
-		//}
+		CreateDir(ParamParser::imgdirs[k] + "DATA/TMP/");
+		char fn1[128], fn2[128];
+		for (int i = 0; i < cameras[k].size(); ++i){
+			sprintf_s(fn1, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			sprintf_s(fn2, "%sDATA/TMP/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		}
+		for (int i = 0; i < cameras[k].size(); ++i){
+			sprintf_s(fn1, "%sDATA/CHECK/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			sprintf_s(fn2, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		}
 		std::vector<std::string> actsfiles = ScanNSortDirectory(ParamParser::imgdirs[k].c_str(), "act");
 		GeometryRec gr;
 		gr.Init(
@@ -901,14 +898,12 @@ void Processor::AlignmentSeq(){
 					p3d_ = scale * R * p3d + t;
 				}
 				for (int cIdx = 0; cIdx < cameras[k0].size(); ++cIdx){
-					//if (k0 != k || cIdx != frmNoHalf){
-						int u, v;
-						cameras[k0][cIdx].GetImgCoordFromWorld(p3d_, u, v);
-						if (!CheckRange(u, v, cameras[k0][cIdx].W(), cameras[k0][cIdx].H())){
-							removed = true;
-							break;
-						}
-					//}
+					int u, v;
+					cameras[k0][cIdx].GetImgCoordFromWorld(p3d_, u, v);
+					if (!CheckRange(u, v, cameras[k0][cIdx].W(), cameras[k0][cIdx].H())){
+						removed = true;
+						break;
+					}
 				}
 				if (removed) break;
 			}
@@ -918,19 +913,19 @@ void Processor::AlignmentSeq(){
 				newSize++;
 			}
 		}
-
-		//for (int i = 0; i < cameras[k].size(); ++i){
-		//	sprintf_s(fn1, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	sprintf_s(fn2, "%sDATA/CHECK/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
-		//}
-		//for (int i = 0; i < cameras[k].size(); ++i){
-		//	sprintf_s(fn1, "%sDATA/TMP/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	sprintf_s(fn2, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
-		//	MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
-		//}
+		for (int i = 0; i < cameras[k].size(); ++i){
+			sprintf_s(fn1, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			sprintf_s(fn2, "%sDATA/CHECK/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		}
+		for (int i = 0; i < cameras[k].size(); ++i){
+			sprintf_s(fn1, "%sDATA/TMP/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			sprintf_s(fn2, "%sDATA/_depth%d.raw", ParamParser::imgdirs[k].c_str(), i);
+			MoveFileEx(fn1, fn2, MOVEFILE_REPLACE_EXISTING);
+		}
 	}
 
+	CreateDir("./Result/");
 	std::vector<std::vector<Eigen::Vector3f>> point3f(ParamParser::imgdirs.size());
 	std::vector<std::vector<Eigen::Vector3f>> normal3f(ParamParser::imgdirs.size());
 	for (int k = 0; k < ParamParser::imgdirs.size(); ++k){
@@ -941,22 +936,18 @@ void Processor::AlignmentSeq(){
 			normal3f[k][i] = (Rs[k] * normals[k][i]).cast<float>();
 		}
 
-		sprintf_s(fn, "./PSR%d.obj", k);
+		sprintf_s(fn, "./Result/PSR%d.obj", k);
 		WriteObj(fn, point3f[k], normal3f[k]);
 	}
 
-	std::ofstream ofs("./PSR.npts", std::ofstream::out);
-	std::ofstream ofs1("./PSR.obj", std::ofstream::out);
+	std::ofstream ofs("./Result/PSR.npts", std::ofstream::out);
 	for (int k = 0; k < point3f.size(); ++k){
 		for (int i = 0; i < point3f[k].size(); ++i){
 			ofs << point3f[k][i][0] << " " << point3f[k][i][1] << " " << point3f[k][i][2] << " "
 				<< normal3f[k][i][0] << " " << normal3f[k][i][1] << " " << normal3f[k][i][2] << std::endl;
-			ofs1 << "v " << point3f[k][i][0] << " " << point3f[k][i][1] << " " << point3f[k][i][2] << " "
-				<< normal3f[k][i][0] << " " << normal3f[k][i][1] << " " << normal3f[k][i][2] << std::endl;
 		}
 	}
 	ofs.close();
-	ofs1.close();
 
 	GeometryRec gr;
 	gr.Init(
@@ -974,6 +965,51 @@ void Processor::AlignmentSeq(){
 		ParamParser::psn_dpt_max,
 		ParamParser::psn_dpt_min
 		);
-	gr.RunPoisson("./");
+	gr.RunPoisson("./Result/");
 
+	std::vector<Eigen::Vector3d> point3d, normal3d;
+	std::vector<int> facets;
+	ReadObj("./Result/Model.obj", point3d, normal3d, facets);
+
+	int newSize = 0;
+	std::unordered_map<int, int> mp;
+	for (int pIdx = 0; pIdx < point3d.size(); ++pIdx){
+		const Eigen::Vector3d &p3d = point3d[pIdx];
+		bool removed = false;
+		for (int k0 = 0; k0 < ParamParser::imgdirs.size(); ++k0){
+			Eigen::Vector3d p3d_ = 1.0 / scales[k0] * Rs[k0].transpose() * (p3d - ts[k0]);
+			for (int cIdx = 0; cIdx < cameras[k0].size(); ++cIdx){
+				int u, v;
+				cameras[k0][cIdx].GetImgCoordFromWorld(p3d_, u, v);
+				if (!CheckRange(u, v, cameras[k0][cIdx].W(), cameras[k0][cIdx].H())){
+					removed = true;
+					break;
+				}
+			}
+			if (removed) break;
+		}
+		if (!removed){
+			point3d[newSize] = point3d[pIdx];
+			normal3d[newSize] = normal3d[pIdx];
+			mp[pIdx] = newSize;
+			newSize++;
+		}
+	}
+	std::cout << newSize << " | " << point3d.size() << std::endl;
+	point3d.resize(newSize);
+	normal3d.resize(newSize);
+
+	std::vector<int> facets_;
+	for (int fIdx = 0; fIdx < facets.size(); fIdx += 3){
+		if (mp.count(facets[fIdx]) && mp.count(facets[fIdx + 1]) && mp.count(facets[fIdx + 2])){
+			facets_.push_back(mp[facets[fIdx]]);
+			facets_.push_back(mp[facets[fIdx + 1]]);
+			facets_.push_back(mp[facets[fIdx + 2]]);
+		}
+	}
+	std::swap(facets, facets_);
+
+	Alignment align;
+	align.RemoveGround(point3d, normal3d, facets);
+	WriteObj("./Result/Model.obj", point3d, normal3d, facets);
 }

@@ -33,8 +33,7 @@ static void Shuffle(int *k, int n, int m){
 	}
 }
 
-//String Operation
-#pragma region
+#pragma region//String Operation
 static std::vector<std::string> Split(const std::string &line, const char del = ' '){
 	std::vector<std::string> ret;
 	int pos = 0;
@@ -49,7 +48,6 @@ static std::vector<std::string> Split(const std::string &line, const char del = 
 	}
 	return ret;
 }
-
 static std::vector<std::string> ScanNSortDirectory(const char* path, const char* ext){
 	WIN32_FIND_DATA wfd;
 	HANDLE hHandle;
@@ -110,8 +108,7 @@ static int CreateDir(std::string dir){
 }
 #pragma endregion
 
-//Axis Angle
-#pragma region
+#pragma region//Axis Angle
 static double DotProduct(const Eigen::Vector3d &a, const Eigen::Vector3d &b){
 	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
@@ -154,8 +151,7 @@ static void AxisAngleTransform(const Eigen::Vector3d axis, const double angle, c
 
 #pragma endregion
 
-//Serialization
-#pragma region
+#pragma region//Serialization
 static void LoadDepth(const std::string filename, std::vector<double> &depth, int w, int h){
 	std::vector<double>().swap(depth);
 	depth.resize(w * h);
@@ -185,8 +181,8 @@ static void RenderDepthMap(
 	){
 	if (depth.size() <= 0)	return;
 
-	float d_min = HUGE_VAL;
-	float d_max = 1 - HUGE_VAL;
+	double d_min = HUGE_VAL;
+	double d_max = 1 - HUGE_VAL;
 	for (int i = 0; i < depth.size(); ++i){
 		if (depth[i] >= 0){
 			d_min = __min(d_min, depth[i]);
