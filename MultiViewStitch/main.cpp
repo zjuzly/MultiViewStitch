@@ -3,6 +3,7 @@
 #include "PlyObj\PlyObj.h"
 #include "Common\Utils.h"
 #include "Alignment\Alignment.h"
+#include "Deformation\Deformation.h"
 
 int main(int argc, char *argv[]){
 
@@ -31,6 +32,11 @@ int main(int argc, char *argv[]){
 	Alignment align;
 	align.Align(src, src_normals, src_facets, tgt, tgt_normals, tgt_facets, R.transpose().col(2));
 	//align.RemoveGround(point3d, normal3d, facets);
+
+	std::cout << "Deformation" << std::endl;
+	Deformation deform(src, src_normals, src_facets);
+	deform.Deform(tgt, tgt_normals, 100.0, 100.0);
+	exportOBJ("./Result/deform.obj", &deform.Polyhedron());
 #endif
 	return 0;
 }

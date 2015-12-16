@@ -136,7 +136,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\opencv\build\include;E:\3rdPart\SiftGPU\include;D:\Eigen;E:\3rdPart\VideoMat\zly\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\opencv\build\include;E:\3rdPart\SiftGPU\include;D:\Eigen326;E:\3rdPart\VideoMat\zly\include;D:\Program Files\boost_1_55_0\include;D:\CGAL-MSVC12\include;D:\Program Files\CGAL-4.6\auxiliary\gmp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
@@ -144,7 +144,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>D:\opencv\build\x64\vc12\lib;E:\3rdPart\SiftGPU\lib;E:\3rdPart\VideoMat\zly\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\opencv\build\x64\vc12\lib;E:\3rdPart\SiftGPU\lib;E:\3rdPart\VideoMat\zly\lib;D:\Program Files\boost_1_55_0\lib;D:\CGAL-MSVC12\lib;D:\Program Files\CGAL-4.6\auxiliary\gmp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>
@@ -153,6 +153,8 @@
   <ItemGroup>
     <ClInclude Include="Alignment\Alignment.h" />
     <ClInclude Include="Camera\Camera.h" />
+    <ClInclude Include="Deformation\Deformation.h" />
+    <ClInclude Include="Deformation\PropertyMap.h" />
     <ClInclude Include="Depth2Model\Depth2Model.h" />
     <ClInclude Include="FeatureProc\FeatureProc.h" />
     <ClInclude Include="PartRecognition\PartRecognition.h" />
@@ -169,6 +171,7 @@
   <ItemGroup>
     <ClCompile Include="Alignment\Alignment.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
+    <ClCompile Include="Deformation\Deformation.cpp" />
     <ClCompile Include="PartRecognition\PartRecognition.cpp" />
     <ClCompile Include="PlyObj\PlyObj.cpp" />
     <ClCompile Include="Depth2Model\Depth2Model.cpp" />
