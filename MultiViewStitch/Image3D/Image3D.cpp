@@ -2,7 +2,7 @@
 #include <limits>
 #include "Image3D.h"
 #include "../Common/Utils.h"
-#include "../Common/PlyObj.h"
+#include "../PlyObj/PlyObj.h"
 #include "../Depth2Model/Depth2Model.h"
 #include "../Alignment/Alignment.h"
 #include "../Parameter/ParamParser.h"
@@ -97,12 +97,13 @@ void Image3D::SolveUnProjectionD(const std::vector<double> &depth){
 			facets[i * 3 + 2] = d2m.facets[i][2];
 		}
 		Alignment align;
-		align.RemoveGround(d2m.point3d, std::vector<Eigen::Vector3d>(), facets);
-		std::vector<Eigen::Vector3f> point3f(d2m.point3d.size());
-		for (int i = 0; i < d2m.point3d.size(); ++i){
-			point3f[i] = d2m.point3d[i].cast<float>();
-		}
-		WriteObj(fn, point3f, std::vector<Eigen::Vector3f>(), facets);
+		align.RetainConnectRegion(d2m.point3d, std::vector<Eigen::Vector3d>(), facets);
+		//std::vector<Eigen::Vector3f> point3f(d2m.point3d.size());
+		//for (int i = 0; i < d2m.point3d.size(); ++i){
+		//	point3f[i] = d2m.point3d[i].cast<float>();
+		//}
+		//WriteObj(fn, point3f, std::vector<Eigen::Vector3f>(), facets);
+		WriteObj(fn, d2m.point3d, std::vector<Eigen::Vector3d>(), facets);
 	}
 
 	int w = cam.W();

@@ -1,1 +1,6 @@
-../data/zly/
+#../data/1450162686944/front/key/
+#../data/1450162686944/side1/key/
+#../data/1450162686944/back/key/
+#../data/1450162686944/side2/key/
+
+../data/lsr/Images/

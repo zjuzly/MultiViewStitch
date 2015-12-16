@@ -112,7 +112,7 @@ void SRTSolver::EstimateRT(const double scale, Eigen::Matrix3d &R, Eigen::Vector
 	Eigen::Matrix3d UT = U;
 	UT.transposeInPlace();
 	R = V * UT;
-	if (R.determinant() == -1){ //如果R是反射矩阵，需对R进行纠正
+	if (fabs(R.determinant() + 1) <= 1e-9){ //如果R是反射矩阵，需对R进行纠正
 		Eigen::Matrix3d Sigma = Eigen::Matrix3d::Identity();
 		Sigma(2, 2) = -1;
 		R = V * Sigma * UT; 
@@ -270,6 +270,11 @@ void SRTSolver::EstimateTransform(double &scale, double R[3][3], double t[3]){
 }
 
 void SRTSolver::EstimateTransform(double &scale, Eigen::Matrix3d &R, Eigen::Vector3d &t){
+	scale = EstimateScale();
+	EstimateRT(scale, R, t);
+}
+
+void SRTSolver::EstimateTransformRansac(double &scale, Eigen::Matrix3d &R, Eigen::Vector3d &t){
 	scale = EstimateScale();
 	EstimateRTRansac(scale, R, t);
 }

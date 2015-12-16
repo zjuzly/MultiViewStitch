@@ -23,6 +23,7 @@ public:
 	static double rot_angle;
 	static double ssd_err;
 	static double pixel_err;
+	static double adapt_pixel_err_ratio;
 	static double distmax; //0.5
 	static double ratiomax; //0.5
 	static double hl_margin_ratio; //0.15

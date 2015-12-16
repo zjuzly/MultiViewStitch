@@ -155,10 +155,11 @@
     <ClInclude Include="Camera\Camera.h" />
     <ClInclude Include="Depth2Model\Depth2Model.h" />
     <ClInclude Include="FeatureProc\FeatureProc.h" />
+    <ClInclude Include="PartRecognition\PartRecognition.h" />
     <ClInclude Include="Reconstruction\GeometryRec.h" />
     <ClInclude Include="Image3D\Image3D.h" />
     <ClInclude Include="Parameter\ParamParser.h" />
-    <ClInclude Include="Common\PlyObj.h" />
+    <ClInclude Include="PlyObj\PlyObj.h" />
     <ClInclude Include="SetUtils\PointSetUtils.h" />
     <ClInclude Include="Processor\Processor.h" />
     <ClInclude Include="Solver\SRTSolver.h" />
@@ -168,6 +169,8 @@
   <ItemGroup>
     <ClCompile Include="Alignment\Alignment.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
+    <ClCompile Include="PartRecognition\PartRecognition.cpp" />
+    <ClCompile Include="PlyObj\PlyObj.cpp" />
     <ClCompile Include="Depth2Model\Depth2Model.cpp" />
     <ClCompile Include="FeatureProc\FeatureProc.cpp" />
     <ClCompile Include="Reconstruction\GeometryRec.cpp" />

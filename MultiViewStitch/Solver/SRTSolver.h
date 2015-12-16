@@ -22,6 +22,7 @@ public:
 	void SetPrintFlag(bool isPrint_){ isPrint = isPrint_; }
 	void EstimateTransform(double &scale, double R[3][3], double t[3]);
 	void EstimateTransform(double &scale, Eigen::Matrix3d &R, Eigen::Vector3d &t);
+	void EstimateTransformRansac(double &scale, Eigen::Matrix3d &R, Eigen::Vector3d &t);
 	double ResidualError(const double scale, Eigen::Matrix3d &R, Eigen::Vector3d &t);
 private:
 	double EstimateScale();

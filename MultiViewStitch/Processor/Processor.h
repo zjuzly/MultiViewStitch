@@ -45,7 +45,10 @@ private:
 		const std::vector<std::vector<Camera>> &cameras,
 		std::vector<double> &scales,
 		std::vector<Eigen::Matrix3d> &Rs,
-		std::vector<Eigen::Vector3d> &ts);
+		std::vector<Eigen::Vector3d> &ts,
+		std::vector<std::pair<int, int>> &selectFrames);
+private:
+	std::vector<std::vector<Image3D>> models;
 };
 
 #endif

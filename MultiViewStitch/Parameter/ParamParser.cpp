@@ -16,6 +16,7 @@ int ParamParser::axis = 0;
 double ParamParser::rot_angle = 10.0;
 double ParamParser::ssd_err = 16.0;
 double ParamParser::pixel_err = 55.0;
+double ParamParser::adapt_pixel_err_ratio = 0.6;
 double ParamParser::distmax = 0.7;
 double ParamParser::ratiomax = 0.8;
 double ParamParser::hl_margin_ratio = 0.1;
@@ -61,6 +62,7 @@ void ParamParser::setParamFromFile(const std::string filename){
 		else if ("Axis" == tip){ ifs >> axis; }
 		else if ("RotAngle" == tip){ ifs >> rot_angle; }
 		else if ("PixelError" == tip){ ifs >> pixel_err; }
+		else if ("AdtPxlErrRatio" == tip){ ifs >> adapt_pixel_err_ratio; }
 		else if ("SSDError" == tip){ ifs >> ssd_err; }
 		else if ("ReprojError" == tip){ ifs >> reproj_err; }
 		else if ("DistMax" == tip){ ifs >> distmax; }

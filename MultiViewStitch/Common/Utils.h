@@ -137,6 +137,17 @@ static void RotationMatrix(const double angle, const Eigen::Vector3d &u, Eigen::
 	R(2, 2) = cosine + u[2] * u[2] * (1 - cosine);
 }
 
+static void CalcRotation(const Eigen::Vector3d &vecBefore, const Eigen::Vector3d &vecAfter, Eigen::Matrix3d &R){
+	double rotationAngle;
+	Eigen::Vector3d vecBefore_n = vecBefore.normalized();
+	Eigen::Vector3d vecAfter_n = vecAfter.normalized();
+	double value = vecBefore_n.dot(vecAfter_n);
+	rotationAngle = acos(value); //acos(__min(1.0, value));
+	Eigen::Vector3d u = vecBefore_n.cross(vecAfter_n);
+	u.normalize();
+	RotationMatrix(rotationAngle, u, R);
+}
+
 static void AxisAngleTransform(const Eigen::Vector3d axis, const double angle, const Eigen::Vector3d pb, Eigen::Vector3d &pa){
 	if (angle <= 1e-9 && angle >= -1e-9){ pa = pb; return; }
 	double radian = (angle / 180.0) * M_PI;

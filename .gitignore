@@ -1,6 +1,7 @@
 /data/
 /x64/
 /MultiViewStitch/Match/
+/MultiViewStitch/Result/
 /MultiViewStitch/x64/
 *.opensdf
 *.sdf

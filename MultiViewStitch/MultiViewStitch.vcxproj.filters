@@ -48,10 +48,13 @@
     <ClInclude Include="Common\Utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Common\PlyObj.h">
+    <ClInclude Include="Processor\Processor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Processor\Processor.h">
+    <ClInclude Include="PlyObj\PlyObj.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PartRecognition\PartRecognition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -90,6 +93,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Processor\Processor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlyObj\PlyObj.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PartRecognition\PartRecognition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
