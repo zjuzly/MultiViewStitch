@@ -100,12 +100,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\opencv\build\include;E:\3rdPart\SiftGPU\include;D:\Eigen;E:\3rdPart\VideoMat\zly\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\opencv\build\include;E:\3rdPart\SiftGPU\include;D:\Eigen326;E:\3rdPart\VideoMat\zly\include;D:\Program Files\boost_1_55_0\include;D:\CGAL-MSVC12\include;D:\Program Files\CGAL-4.6\auxiliary\gmp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\opencv\build\x64\vc12\lib;E:\3rdPart\SiftGPU\lib;E:\3rdPart\VideoMat\zly\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\opencv\build\x64\vc12\lib;E:\3rdPart\SiftGPU\lib;E:\3rdPart\VideoMat\zly\lib;D:\Program Files\boost_1_55_0\lib;D:\CGAL-MSVC12\lib;D:\Program Files\CGAL-4.6\auxiliary\gmp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -157,6 +157,7 @@
     <ClInclude Include="Deformation\PropertyMap.h" />
     <ClInclude Include="Depth2Model\Depth2Model.h" />
     <ClInclude Include="FeatureProc\FeatureProc.h" />
+    <ClInclude Include="Model2Depth\Model2Depth.h" />
     <ClInclude Include="PartRecognition\PartRecognition.h" />
     <ClInclude Include="Reconstruction\GeometryRec.h" />
     <ClInclude Include="Image3D\Image3D.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="Alignment\Alignment.cpp" />
     <ClCompile Include="Camera\Camera.cpp" />
     <ClCompile Include="Deformation\Deformation.cpp" />
+    <ClCompile Include="Model2Depth\Model2Depth.cpp" />
     <ClCompile Include="PartRecognition\PartRecognition.cpp" />
     <ClCompile Include="PlyObj\PlyObj.cpp" />
     <ClCompile Include="Depth2Model\Depth2Model.cpp" />

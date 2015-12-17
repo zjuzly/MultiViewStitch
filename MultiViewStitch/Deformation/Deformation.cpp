@@ -334,7 +334,7 @@ void Deformation::Deform(
 				double projDist = sqrt(dir.squaredNorm() - projLen * projLen);
 				Q.push(Node(projLen, projDist, indices[j]));
 			}
-			std::cout << Q.size() << " ";
+			//std::cout << Q.size() << " ";
 			const int neighborNum = __min(8, (int)Q.size());
 			double m_projLen = 0, m_projDist = 0;
 			Eigen::Vector3d m_pts(0, 0, 0);

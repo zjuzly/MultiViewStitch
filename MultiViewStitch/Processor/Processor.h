@@ -7,11 +7,19 @@
 
 class Processor{
 public:
+	void LoadCameras();
 	void AlignmentSeq();
-	void CheckConsistency(const std::vector<std::vector<Camera>> &cameras);
+	void Deform();
+	void Render(int argc, char *argv[]);
+
+	/**
+	*Test
+	*/
+	void RenderDepthMap();
 private:
 	/**
 	*/
+	void CheckConsistency(const std::vector<std::vector<Camera>> &cameras);
 	void CheckConsistencyCore(
 		const Camera curcam,
 		const std::vector<Camera> refcams,
@@ -49,6 +57,7 @@ private:
 		std::vector<std::pair<int, int>> &selectFrames);
 private:
 	std::vector<std::vector<Image3D>> models;
+	std::vector<std::vector<Camera>> cameras;
 };
 
 #endif

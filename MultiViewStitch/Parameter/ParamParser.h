@@ -49,6 +49,7 @@ public:
 	static double edge_sz_thres;
 
 	static double dist_thres;
+	static double smooth_thres;
 };
 
 #endif

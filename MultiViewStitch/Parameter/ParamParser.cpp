@@ -83,6 +83,7 @@ void ParamParser::setParamFromFile(const std::string filename){
 		else if ("PsnDptMax" == tip){ ifs >> psn_dpt_max; }
 		else if ("PsnDptMin" == tip){ ifs >> psn_dpt_min; }
 		else if ("DistThreshold" == tip){ ifs >> dist_thres; }
+		else if ("SmoothThreshold" == tip){ ifs >> smooth_thres; }
 	}
 	ifs.close();
 

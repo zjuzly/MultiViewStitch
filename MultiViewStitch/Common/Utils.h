@@ -164,7 +164,8 @@ static void AxisAngleTransform(const Eigen::Vector3d axis, const double angle, c
 
 #pragma region//Serialization
 static void LoadDepth(const std::string filename, std::vector<double> &depth, int w, int h){
-	std::vector<double>().swap(depth);
+	//std::vector<double>().swap(depth);
+	depth.clear();
 	depth.resize(w * h);
 	float *raw = new float[w * h];
 	std::ifstream ifs(filename.c_str(), std::ifstream::in | std::ifstream::binary);
@@ -205,10 +206,10 @@ static void RenderDepthMap(
 		for (int i = 0; i < w; ++i){
 			if (depth[j * w + i] >= 0){
 				uchar val = uchar(255 * (depth[j * w + i] - d_min) / (d_max - d_min));
-				gray.at<uchar>(j, i) = 255 - val;
+				gray.at<uchar>(j, i) = val;
 			}
 			else{
-				gray.at<uchar>(j, i) = 0;
+				gray.at<uchar>(j, i) = 255;
 			}
 		}
 	}

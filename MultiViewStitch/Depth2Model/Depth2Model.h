@@ -16,7 +16,7 @@ public:
 		const bool writeMesh = false);
 public:
 	std::vector<Eigen::Vector3d> point3d;
-	std::vector<Eigen::Vector3i> facets;
+	std::vector<int> facets;
 	std::vector<int> texIndex;
 private:
 	double m_fMinDepth;

@@ -30,6 +30,10 @@ public:
 	void ValidateModel(){ valid = true; }
 	bool isValid(){ return valid; }
 
+	Eigen::Matrix4f GetObjAbsTransformGL();
+	void GetFrustumGL(float znear, float &left, float &right, float &bottom, float &top);
+	Eigen::Matrix4f GetProjectGL(float left, float right, float bottom, float top, float znear, float zfar);
+
 	void GetCamCoordFromImg(const int u, const int v, const double d, Eigen::Vector3d &p3d) const;
 	void GetImgCoordFromCam(const Eigen::Vector3d &p3d, int &u, int &v) const;
 	void GetWorldCoordFromImg(const int u, const int v, const double d, Eigen::Vector3d &p3d) const;

@@ -50,8 +50,10 @@ void Depth2Model::SaveModel(
 					fabs(depth[y * width + x] - depth[(y + 1) * width + x]) <= threshold &&
 					fabs(depth[(y + 1) * width + x + 1] - depth[(y + 1) * width + x]) <= threshold &&
 					fabs(depth[y * width + x] - depth[(y + 1) * width + x + 1]) <= threshold){
-					facets.push_back(Eigen::Vector3i(tab[y][x] - 1, tab[y + 1][x] - 1, tab[y + 1][x + 1] - 1));
-
+					//facets.push_back(Eigen::Vector3i(tab[y][x] - 1, tab[y + 1][x] - 1, tab[y + 1][x + 1] - 1));
+					facets.push_back(tab[y][x] - 1);
+					facets.push_back(tab[y + 1][x] - 1);
+					facets.push_back(tab[y + 1][x + 1] - 1);
 					if (writeMesh){
 						ofs << "f " << tab[y][x] << " " << tab[y + 1][x] << " " << tab[y + 1][x + 1] << std::endl;
 						//ofs << "f " << tab[y][x] << " " << tab[y + 1][x + 1] << " " << tab[y + 1][x] << std::endl;
@@ -61,8 +63,10 @@ void Depth2Model::SaveModel(
 					fabs(depth[y * width + x] - depth[y * width + x + 1]) <= threshold &&
 					fabs(depth[(y + 1) * width + x + 1] - depth[y * width + x + 1]) <= threshold &&
 					fabs(depth[(y + 1) * width + x + 1] - depth[y * width + x]) <= threshold){
-					facets.push_back(Eigen::Vector3i(tab[y][x] - 1, tab[y + 1][x + 1] - 1, tab[y][x + 1] - 1));
-
+					//facets.push_back(Eigen::Vector3i(tab[y][x] - 1, tab[y + 1][x + 1] - 1, tab[y][x + 1] - 1));
+					facets.push_back(tab[y][x] - 1);
+					facets.push_back(tab[y + 1][x + 1] - 1);
+					facets.push_back(tab[y][x + 1] - 1);
 					if (writeMesh){
 						ofs << "f " << tab[y][x] << " " << tab[y + 1][x + 1] << " " << tab[y][x + 1] << std::endl;
 						//ofs << "f " << tab[y][x] << " " << tab[y][x + 1] << " " << tab[y + 1][x + 1] << std::endl;

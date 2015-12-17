@@ -7,12 +7,12 @@ WriteMesh 0
 IterNum 200
 SampleIterval 16
 SSDWin 5
-SSDError 70.0
+SSDError 80.0
 ReprojError 4
 Axis 0
 RotAngle 10.0
 PixelError 60.0
-AdtPxlErrRatio 0.6
+AdtPxlErrRatio 0.7
 DistMax 0.7
 RatioMax 0.8
 HLMarginRatio 0.1
@@ -20,17 +20,18 @@ VLMarginRatio 0.1
 HRMarginRatio 0.15
 VRMarginRatio 0.1
 MinDsp 0.0025
-MaxDsp 1.0
+MaxDsp 0.3
 
 #parameters for reconstruction
 PtSampRds 2
-NbrFrmNum 1
+NbrFrmNum 3
 NbrFrmStep 1
 MaxDspErr 0.01
-MinConf 0.96
+MinConf 0.9
 EdgeSzThres 4.0
 PsnDptMax 10
 PsnDptMin 8
 
 #parameters for template alignment
-DistThreshold 0.85
+DistThreshold 0.81
+SmoothThreshold 0.12

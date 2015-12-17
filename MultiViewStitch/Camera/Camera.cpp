@@ -3,6 +3,40 @@
 #include <fstream>
 #include <iostream>
 
+Eigen::Matrix4f Camera::GetObjAbsTransformGL(){
+	Eigen::Matrix4f glMatrix = Eigen::Matrix4f::Identity();
+	glMatrix.block(0, 0, 3, 3) = R.cast<float>();
+	glMatrix.block(0, 3, 3, 1) = t.cast<float>();
+	glMatrix.row(1) = -glMatrix.row(1);
+	glMatrix.row(2) = -glMatrix.row(2);
+	return glMatrix;
+}
+
+void Camera::GetFrustumGL(float znear, float &left, float &right, float &bottom, float &top){
+	float cx = K(0, 2);
+	float cy = K(1, 2);
+	float fx = K(0, 0);
+	float fy = K(1, 1);
+	left = cx / fx * znear;
+	top = cy / fy * znear; //0.00304
+	right = (w - cx) / cx * left; //0.00539
+	bottom = (h - cy) / cy * top; //0.00303
+	left = -left;//-0.00541
+	bottom = -bottom;//-0.00303
+}
+
+Eigen::Matrix4f Camera::GetProjectGL(float left, float right, float bottom, float top, float znear, float zfar){
+	Eigen::Matrix4f projMatrix = Eigen::Matrix4f::Zero();
+	projMatrix(0, 0) = 2 * znear / (right - left); //right - left = 0.0108; 1.852
+	projMatrix(1, 1) = 2 * znear / (top - bottom); //top - bottom = 0.00607; 3.295
+	projMatrix(2, 0) = (right + left) / (right - left);
+	projMatrix(2, 1) = (top + bottom) / (top - bottom);
+	projMatrix(2, 2) = -(zfar + znear) / (zfar - znear);
+	projMatrix(2, 3) = -1;
+	projMatrix(3, 2) = -2 * zfar * znear / (zfar - znear);
+	return projMatrix;
+}
+
 void Camera::GetCamCoordFromImg(const int u, const int v, const double d, Eigen::Vector3d &p3d) const{
 	p3d[0] = (u - K(0, 2)) * d / K(0, 0);
 	p3d[1] = (v - K(1, 2)) * d / K(1, 1);
@@ -59,7 +93,7 @@ std::vector<Camera> LoadCalibrationFromActs(std::string filename){
 			std::vector<std::string> strs = Split(std::string(line), ' ');
 			std::vector<float> intri;
 			for (int i = 0; i < (int)strs.size(); ++i){
-				intri.push_back((float)std::atof(strs[i].c_str()));
+				intri.push_back(std::atof(strs[i].c_str()));
 			}
 			K(0, 0) = intri[0]; K(1, 1) = intri[1];
 			K(0, 2) = intri[2]; K(1, 2) = intri[3];
@@ -78,28 +112,28 @@ std::vector<Camera> LoadCalibrationFromActs(std::string filename){
 				ifs.getline(line, 128);
 				std::vector<std::string> srow;
 				srow = Split(std::string(row[0]), ' ');
-				R(0, 0) = (float)std::atof(srow[0].c_str());
-				R(0, 1) = (float)std::atof(srow[1].c_str());
-				R(0, 2) = (float)std::atof(srow[2].c_str());
-				t[0] = (float)std::atof(srow[3].c_str());
+				R(0, 0) = std::atof(srow[0].c_str());
+				R(0, 1) = std::atof(srow[1].c_str());
+				R(0, 2) = std::atof(srow[2].c_str());
+				t[0] = std::atof(srow[3].c_str());
 
 				srow = Split(std::string(row[1]), ' ');
-				R(1, 0) = (float)std::atof(srow[0].c_str());
-				R(1, 1) = (float)std::atof(srow[1].c_str());
-				R(1, 2) = (float)std::atof(srow[2].c_str());
-				t[1] = (float)std::atof(srow[3].c_str());
+				R(1, 0) = std::atof(srow[0].c_str());
+				R(1, 1) = std::atof(srow[1].c_str());
+				R(1, 2) = std::atof(srow[2].c_str());
+				t[1] = std::atof(srow[3].c_str());
 
 				srow = Split(std::string(row[2]), ' ');
-				R(2, 0) = (float)std::atof(srow[0].c_str());
-				R(2, 1) = (float)std::atof(srow[1].c_str());
-				R(2, 2) = (float)std::atof(srow[2].c_str());
-				t[2] = (float)std::atof(srow[3].c_str());
+				R(2, 0) = std::atof(srow[0].c_str());
+				R(2, 1) = std::atof(srow[1].c_str());
+				R(2, 2) = std::atof(srow[2].c_str());
+				t[2] = std::atof(srow[3].c_str());
 
 				Camera cam;
 				cam.SetK(K);
 				cam.SetRT(R, t);
-				cam.SetW((int)(2 * (K(0, 2) + 0.5f)));
-				cam.SetH((int)(2 * (K(1, 2) + 0.5f)));
+				cam.SetW((int)(2 * (K(0, 2) + 0.5)));
+				cam.SetH((int)(2 * (K(1, 2) + 0.5)));
 
 				if (K(0, 0) > 0)	cam.ValidateModel();
 				vcamera.push_back(cam);
