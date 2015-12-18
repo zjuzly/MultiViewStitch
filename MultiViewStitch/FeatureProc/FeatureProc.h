@@ -29,9 +29,4 @@ public:
 		const std::vector<std::vector<float>> &descs1,
 		const std::vector<std::vector<float>> &descs2,
 		std::vector<std::vector<std::vector<std::pair<Eigen::Vector2i, Eigen::Vector2i>>>> &matches);
-
-	static double SSD(
-		const cv::Mat &img1, const int u1, const int v1,
-		const cv::Mat &img2, const int u2, const int v2,
-		const int N = 3);
 };

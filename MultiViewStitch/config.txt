@@ -1,34 +1,34 @@
 #parameters for sequence alignment
 ImgPathList ./imgPathList.txt
-ViewCount 1
+ViewCount 3
 MinMatchCount 7
 Segment 0
 WriteMesh 0
 AllSeqProj 0
 IterNum 200
-SampleIterval 16
-SSDWin 5
-SSDError 80.0
+SampleIterval 20
+SSDWin 7
+SSDError 40.0
 ReprojError 4
-Axis 0
+Axis 1
 RotAngle 10.0
 PixelError 60.0
-AdtPxlErrRatio 0.7
+AdtPxlErrRatio 0.75
 DistMax 0.7
 RatioMax 0.8
-HLMarginRatio 0.1
+HLMarginRatio 0.25
 VLMarginRatio 0.1
-HRMarginRatio 0.15
+HRMarginRatio 0.25
 VRMarginRatio 0.1
 MinDsp 0.0025
 MaxDsp 0.3
 
 #parameters for reconstruction
 PtSampRds 2
-NbrFrmNum 5
+NbrFrmNum 2
 NbrFrmStep 1
 MaxDspErr 0.01
-MinConf 0.8
+MinConf 0.9
 EdgeSzThres 4.0
 PsnDptMax 10
 PsnDptMin 8

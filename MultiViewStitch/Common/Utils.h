@@ -216,4 +216,125 @@ static void RenderDepthMap(
 	cv::imwrite(filename, gray);
 }
 #pragma endregion
+
+#pragma region//Image Operation
+static double SSD(
+	const cv::Mat &img1, const int u1, const int v1,
+	const cv::Mat &img2, const int u2, const int v2,
+	const int N = 3){
+	cv::Rect roi1 = cv::Rect(u1 - N, v1 - N, 2 * N + 1, 2 * N + 1);
+	cv::Mat roiMat1(img1, roi1);
+	cv::Mat roiMatGray1(roi1.height, roi1.width, CV_8UC1);
+	cv::cvtColor(roiMat1, roiMatGray1, cv::COLOR_RGB2GRAY);
+	cv::Rect roi2 = cv::Rect(u2 - N, v2 - N, 2 * N + 1, 2 * N + 1);
+	cv::Mat roiMat2(img2, roi2);
+	cv::Mat roiMatGray2(roi2.height, roi2.width, CV_8UC1);
+	cv::cvtColor(roiMat2, roiMatGray2, cv::COLOR_RGB2GRAY);
+
+	double sum = 0.0;
+	int length = 2 * N + 1;
+	for (int i = 0; i < length; ++i){
+		for (int j = 0; j < length; ++j){
+			sum += double(roiMatGray1.at<uchar>(i, j) - roiMatGray2.at<uchar>(i, j)) * double(roiMatGray1.at<uchar>(i, j) - roiMatGray2.at<uchar>(i, j));
+		}
+	}
+	return sqrt(sum / (length * length));
+	//if (type == CV_32FC1){
+	//	for (int i = 0; i < length; ++i){
+	//		for (int j = 0; j < length; ++j){
+	//			sum += double(roiMat1.at<uchar>(i, j) - roiMat2.at<uchar>(i, j)) * double(roiMat1.at<uchar>(i, j) - roiMat2.at<uchar>(i, j));
+	//		}
+	//	}
+	//	return sqrt(sum / (length * length));
+	//}
+	//else{
+	//	for (int i = 0; i < length; ++i){
+	//		for (int j = 0; j < length; ++j){
+	//			cv::Vec3b bgr1 = roiMat1.at<cv::Vec3b>(i, j);
+	//			cv::Vec3b bgr2 = roiMat2.at<cv::Vec3b>(i, j);
+	//			sum += double(bgr1[0] - bgr2[0]) * double(bgr1[0] - bgr2[0]);
+	//			sum += double(bgr1[1] - bgr2[1]) * double(bgr1[1] - bgr2[1]);
+	//			sum += double(bgr1[2] - bgr2[2]) * double(bgr1[2] - bgr2[2]);
+	//		}
+	//	}
+	//	return sqrt(sum / (length * length * 3.0));
+	//}
+}
+
+//debugging
+static double NCC(
+	const cv::Mat &img1, const int u1, const int v1,
+	const cv::Mat &img2, const int u2, const int v2,
+	const int &N){
+	//cv::Rect roi1 = cv::Rect(u1 - N, v1 - N, 2 * N + 1, 2 * N + 1);
+	//cv::Mat roiMat1(img1, roi1);
+	//cv::Mat roiMatGray1(roi1.height, roi1.width, CV_8UC1);
+	//cv::cvtColor(roiMat1, roiMatGray1, cv::COLOR_RGB2GRAY);
+	//cv::Mat f1 = cv::Mat(roi1.height, roi1.width, CV_32FC1);
+	//roiMatGray1.convertTo(f1, CV_32FC1);
+	//float s1(0.0f);
+	//for (int i = 0; i < f1.rows; ++i){
+	//	for (int j = 0; j < f1.cols; ++j){
+	//		s1 += f1.at<float>(i, j);
+	//	}
+	//}
+	//s1 /= (f1.rows * f1.cols);
+	//float sum1(0.0f);
+	//for (int i = 0; i < f1.rows; ++i){
+	//	for (int j = 0; j < f1.cols; ++j){
+	//		float &p = f1.at<float>(i, j);
+	//		p -= s1;
+	//		sum1 += p * p;
+	//	}
+	//}
+	//sum1 = sqrt(sum1);
+	//for (int i = 0; i < f1.rows; ++i){
+	//	for (int j = 0; j < f1.cols; ++j){
+	//		float &p = f1.at<float>(i, j);
+	//		p /= sum1;
+	//	}
+	//}
+
+	//cv::Rect roi2 = cv::Rect(u2 - N, v2 - N, 2 * N + 1, 2 * N + 1);
+	//cv::Mat roiMat2(img2, roi2);
+	//cv::Mat roiMatGray2(roi2.height, roi2.width, CV_8UC1);
+	//cv::cvtColor(roiMat2, roiMatGray2, cv::COLOR_RGB2GRAY);
+	//cv::Mat f2 = cv::Mat(roi2.height, roi2.width, CV_32FC1);
+	//roiMatGray2.convertTo(f2, CV_32FC1);
+	//float s2(0.0f);
+	//for (int i = 0; i < f2.rows; ++i){
+	//	for (int j = 0; j < f2.cols; ++j){
+	//		s2 += f2.at<float>(i, j);
+	//	}
+	//}
+	//s2 /= (f2.rows * f2.cols);
+
+	//float sum2(0.0f);
+	//for (int i = 0; i < f2.rows; ++i){
+	//	for (int j = 0; j < f2.cols; ++j){
+	//		float &p = f2.at<float>(i, j);
+	//		p -= s2;
+	//		sum2 += p * p;
+	//	}
+	//}
+	//sum2 = sqrt(sum2);
+	//for (int i = 0; i < f2.rows; ++i){
+	//	for (int j = 0; j < f2.cols; ++j){
+	//		float &p = f2.at<float>(i, j);
+	//		p /= sum2;
+	//	}
+	//}
+	//double corr = 0.0, corrsq = 0.0;
+	//for (int i = 0; i < f2.rows; ++i){
+	//	for (int j = 0; j < f2.cols; ++j){
+	//		float g1 = f1.at<float>(i, j);
+	//		float g2 = f2.at<float>(i, j);
+	//		corr = corr + fabs(g1 * g2);
+	//		corrsq = corrsq + (g1 * g1 * g2 * g2);
+	//	}
+	//}
+	//return (corr / sqrt(corrsq)) / (roi1.height * roi1.width);
+}
+
+#pragma endregion
 #endif

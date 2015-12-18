@@ -149,7 +149,7 @@ void Model2Depth::RenderDepth(){
 	sprintf_s(fn, "%sDATA/Render/_depth%d.raw", path[seqNo].c_str(), frmNo - 1);
 	std::cout << fn << std::endl;
 	SaveDepth(fn, raw);
-#if 1
+#if 0
 	sprintf_s(fn, "%sDATA/Render/pc%d.obj", path[seqNo].c_str(), frmNo - 1);
 	p_d2m->SaveModel(raw, cameras[seqNo][frmNo - 1], fn, true);
 #endif
@@ -167,7 +167,7 @@ void Model2Depth::Run(int argv, char *argc[]){
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
 
 		glutInitWindowPosition(500, 0);
-		std::cout << "run: " << w << " " << h << std::endl;
+		std::cout << "Run: " << w << " " << h << std::endl;
 		glutInitWindowSize(w, h);
 
 		int winid = glutCreateWindow("MultiViewStitch");

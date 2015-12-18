@@ -1,6 +1,6 @@
-#../data/1450162686944/front/key/
-#../data/1450162686944/side1/key/
-#../data/1450162686944/back/key/
-#../data/1450162686944/side2/key/
+#../data/body3/1/025/
+#../data/body3/2/025/
+../data/body3/3/025/
+../data/body3/4/025/
 
-../data/lsr/Images/
+#../data/lsr/Images/

@@ -22,6 +22,7 @@ int main(int argc, char *argv[]){
 			pro.AlignmentSeq();
 		}
 		else{
+			pro.Deform();
 			pro.Render(argc, argv);
 		}
 	}

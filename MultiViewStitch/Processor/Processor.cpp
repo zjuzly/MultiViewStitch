@@ -20,6 +20,7 @@
 void Processor::LoadCameras(){
 	cameras.resize(ParamParser::imgdirs.size());
 	for (int k = 0; k < cameras.size(); ++k){
+		cameras[k].clear();
 		std::vector<std::string> actsfiles = ScanNSortDirectory(ParamParser::imgdirs[k].c_str(), "act");
 		cameras[k] = LoadCalibrationFromActs(actsfiles[0]);
 	}
@@ -690,16 +691,22 @@ void Processor::CalcSimilarityTransformationSeq(
 					int u2 = pr.second[0], v2 = pr.second[1];
 					if (u1 >= ssd_win && v1 >= ssd_win && u2 >= ssd_win && v2 >= ssd_win &&
 						u1 < w - ssd_win && v1 < h - ssd_win && u2 < w - ssd_win && v2 < h - ssd_win){
-						double err = FeatureProc::SSD(imgs[k][i], u1, v1, imgs[k + 1][j], u2, v2, ssd_win);
+						double err = SSD(imgs[k][i], u1, v1, imgs[k + 1][j], u2, v2, ssd_win);
 						if (err <= ssd_err){
 							matches[i][j][newSize++] = matches[i][j][idx];
 						}
+						//double err = NCC(imgs[k][i], u1, v1, imgs[k + 1][j], u2, v2, ssd_win);
+						//std::cout << err << " ";
+						//if (err >= 0.04){
+						//	matches[i][j][newSize++] = matches[i][j][idx];
+						//}
 					}
 				}
 				matches[i][j].resize(newSize);
 				size2[i][j] = newSize;
 			}
 		}
+		//std::cout << std::endl;
 		/*----------------------------------SSD Error-------------------------------*/
 #if 1
 		/*----------------------------------Gap Error-------------------------------*/
@@ -1166,7 +1173,7 @@ void Processor::Render(int argc, char *argv[]){
 	std::vector<std::vector<int>> facets_(ParamParser::imgdirs.size());
 	std::vector<Eigen::Vector3d> points, normals;
 	std::vector<int> facets;
-	ReadObj("./Result/Model.obj", points, normals, facets);
+	ReadObj("./Result/deform.obj", points, normals, facets);
 	for (int k = 0; k < ParamParser::imgdirs.size(); ++k){
 		points_[k].resize(points.size());
 		normals_[k].resize(normals.size());
