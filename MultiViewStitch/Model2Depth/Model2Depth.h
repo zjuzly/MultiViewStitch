@@ -15,34 +15,34 @@ class Depth2Model;
 class Model2Depth{
 public:
 	static void SetInput(
-		const std::vector<Eigen::Vector3d> &points_,
-		const std::vector<Eigen::Vector3d> &normals_,
-		const std::vector<int> &facets_,
-		const std::vector<Camera> &cameras_,
-		const std::string path_/*,
-		const int &w_, const int &h_*/){
-			//w = w_; h = h_;
+		const std::vector<std::vector<Eigen::Vector3d>> &points_,
+		const std::vector<std::vector<Eigen::Vector3d>> &normals_,
+		const std::vector<std::vector<int>> &facets_,
+		const std::vector<std::vector<Camera>> &cameras_,
+		const std::vector<std::string> path_){
 			if (cameras_.size() != 0){
-				w = cameras_[0].W();
-				h = cameras_[0].H();
+				w = cameras_[0][0].W();
+				h = cameras_[0][0].H();
 			}
 			path = path_;
-			points.clear();
-			normals.clear();
-			facets.clear();
-			cameras.clear();
-			//std::copy(points_.begin(), points_.end(), std::back_inserter(points));
-			//std::copy(normals_.begin(), normals_.end(), std::back_inserter(normals));
 			points.resize(points_.size());
 			normals.resize(normals_.size());
-			for (int i = 0; i < points_.size(); ++i){
-				points[i] = points_[i].cast<float>();
+			facets.resize(facets_.size());
+			cameras.resize(cameras_.size());
+			for (int k = 0; k < points_.size(); ++k){
+				points[k].resize(points_[k].size());
+				for (int i = 0; i < points_[k].size(); ++i){
+					points[k][i] = points_[k][i].cast<float>();
+				}
+				normals[k].resize(normals_[k].size());
+				for (int i = 0; i < normals_[k].size(); ++i){
+					normals[k][i] = normals_[k][i].cast<float>();
+				}
+				facets[k].clear();
+				std::copy(facets_[k].begin(), facets_[k].end(), std::back_inserter(facets[k]));
+				cameras[k].clear();
+				std::copy(cameras_[k].begin(), cameras_[k].end(), std::back_inserter(cameras[k]));
 			}
-			for (int i = 0; i < normals_.size(); ++i){
-				normals[i] = normals_[i].cast<float>();
-			}
-			std::copy(facets_.begin(), facets_.end(), std::back_inserter(facets));
-			std::copy(cameras_.begin(), cameras_.end(), std::back_inserter(cameras));
 	}
 	static void InitGL();
 	static void Reshape(int w, int h);
@@ -55,16 +55,17 @@ public:
 protected:
 	static void GetClippingPlane(double proj[], double &znear, double &zfar);
 private:
-	static std::vector<Eigen::Vector3f> points;
-	static std::vector<Eigen::Vector3f> normals;
-	static std::vector<int> facets;
-	static std::vector<Camera> cameras;
+	static std::vector<std::vector<Eigen::Vector3f>> points;
+	static std::vector<std::vector<Eigen::Vector3f>> normals;
+	static std::vector<std::vector<int>> facets;
+	static std::vector<std::vector<Camera>> cameras;
 
-	static std::string path;
+	static std::vector<std::string> path;
 	
 	static float znear;
 	static float zfar;
 	static int frmNo;
+	static int seqNo;
 	static int w, h;
 	static Depth2Model* p_d2m;
 	static bool isExit;

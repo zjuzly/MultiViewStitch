@@ -258,7 +258,7 @@ void Alignment::InitAlignment(
 	Eigen::Vector3d baryCenter1 = pst1.GetBarycenter();
 	Eigen::Vector3d baryCenter2 = pst2.GetBarycenter();
 
-#if 1
+#if 0
 	std::string filename;
 	std::vector<Eigen::Vector3d> pivots1;
 	pivots1.push_back(baryCenter1);
@@ -449,7 +449,7 @@ void Alignment::LocalAlignmentCore(
 	for (int i = 0; i < (int)src_.size(); ++i){ src_[i] -= baryCenter1; }
 	Eigen::Vector3d baryCenter2 = pst2.GetBarycenter();
 
-#if 1
+#if 0
 	static int no = 0;
 	char fn[128];
 	std::vector<Eigen::Vector3d> pivots1;

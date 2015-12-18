@@ -4,6 +4,7 @@
 
 bool ParamParser::writeMesh = false;
 bool ParamParser::isSegment = false;
+bool ParamParser::isAllSeqProj = false;
 
 int ParamParser::view_count = 1;
 int ParamParser::min_match_count = 5;
@@ -37,6 +38,7 @@ double ParamParser::conf_min = 0.6;
 double ParamParser::edge_sz_thres = 4.0;
 
 double ParamParser::dist_thres = 0.7;
+double ParamParser::smooth_thres = 0.1;
 
 std::vector<std::string> ParamParser::imgdirs = std::vector<std::string>();
 
@@ -54,6 +56,7 @@ void ParamParser::setParamFromFile(const std::string filename){
 		if (tip.size() == 0 || (tip.size() > 0 && tip[0] == '#')) continue;
 		if ("WriteMesh" == tip){ ifs >> writeMesh; }
 		else if ("Segment" == tip){ ifs >> isSegment; }
+		else if ("AllSeqProj" == tip){ ifs >> isAllSeqProj; }
 		else if ("ViewCount" == tip){ ifs >> view_count; }
 		else if ("MinMatchCount" == tip){ ifs >> min_match_count; }
 		else if ("IterNum" == tip){ ifs >> iter_num; }

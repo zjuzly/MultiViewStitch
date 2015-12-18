@@ -4,6 +4,7 @@ ViewCount 1
 MinMatchCount 7
 Segment 0
 WriteMesh 0
+AllSeqProj 0
 IterNum 200
 SampleIterval 16
 SSDWin 5
@@ -24,10 +25,10 @@ MaxDsp 0.3
 
 #parameters for reconstruction
 PtSampRds 2
-NbrFrmNum 3
+NbrFrmNum 5
 NbrFrmStep 1
 MaxDspErr 0.01
-MinConf 0.9
+MinConf 0.8
 EdgeSzThres 4.0
 PsnDptMax 10
 PsnDptMin 8

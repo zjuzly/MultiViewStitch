@@ -11,6 +11,7 @@ public:
 	//parameters for alignment
 	static bool writeMesh;
 	static bool isSegment;
+	static bool isAllSeqProj;
 
 	static int view_count; //1
 	static int min_match_count; //10

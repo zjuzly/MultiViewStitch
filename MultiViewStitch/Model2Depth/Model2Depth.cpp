@@ -9,18 +9,19 @@
 #include "../PlyObj/PlyObj.h"
 #include "../Parameter/ParamParser.h"
 
-std::vector<Eigen::Vector3f>	Model2Depth::points		= std::vector<Eigen::Vector3f>();
-std::vector<Eigen::Vector3f>	Model2Depth::normals	= std::vector<Eigen::Vector3f>();
-std::vector<int>				Model2Depth::facets		= std::vector<int>();
-std::vector<Camera>				Model2Depth::cameras	= std::vector<Camera>();
-std::string						Model2Depth::path		= "";
-int								Model2Depth::frmNo		= 0;
-float							Model2Depth::znear		= 0.01f;
-float							Model2Depth::zfar		= 2000.0f;
-int								Model2Depth::w			= 0;
-int								Model2Depth::h			= 0;
-Depth2Model*					Model2Depth::p_d2m		= new Depth2Model(ParamParser::m_fMinDsp, ParamParser::m_fMaxDsp, ParamParser::smooth_thres);
-bool							Model2Depth::isExit		= false;
+std::vector<std::vector<Eigen::Vector3f>>	Model2Depth::points		= std::vector<std::vector<Eigen::Vector3f>>();
+std::vector<std::vector<Eigen::Vector3f>>	Model2Depth::normals	= std::vector<std::vector<Eigen::Vector3f>>();
+std::vector<std::vector<int>>				Model2Depth::facets		= std::vector<std::vector<int>>();
+std::vector<std::vector<Camera>>			Model2Depth::cameras	= std::vector<std::vector<Camera>>();
+std::vector<std::string>					Model2Depth::path		= std::vector<std::string>();
+int											Model2Depth::frmNo		= 0;
+int											Model2Depth::seqNo		= 0;
+float										Model2Depth::znear		= 0.01f;
+float										Model2Depth::zfar		= 2000.0f;
+int											Model2Depth::w			= 0;
+int											Model2Depth::h			= 0;
+Depth2Model*								Model2Depth::p_d2m		= new Depth2Model(ParamParser::m_fMinDsp, ParamParser::m_fMaxDsp, ParamParser::smooth_thres);
+bool										Model2Depth::isExit		= false;
 
 void Model2Depth::InitGL(){
 	//static GLfloat pos[4] = {5.0, 5.0, -50.0, 1.0 };
@@ -34,9 +35,10 @@ void Model2Depth::InitGL(){
 	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LEQUAL);
-	glEnable(GL_NORMALIZE);
-	glEnable(GL_ALPHA_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthFunc(GL_LEQUAL);
+	//glEnable(GL_NORMALIZE);
+	//glEnable(GL_ALPHA_TEST);
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glShadeModel(GL_FLAT);
 	glClearColor(0.f, 0.f, 0.f, 0.f);
 }
@@ -62,16 +64,16 @@ void Model2Depth::Draw(){
 	glMaterialfv(GL_BACK, GL_AMBIENT_AND_DIFFUSE, colrb);
 
 	glBegin(GL_TRIANGLES);
-	for (int i = 0; i < (int)facets.size(); i += 3){
-		int a = facets[i];
-		int b = facets[i + 1];
-		int c = facets[i + 2];
-		glNormal3f(normals[a][0], normals[a][1], normals[a][2]);
-		glVertex3f(points[a][0], points[a][1], points[a][2]);
-		glNormal3f(normals[b][0], normals[b][1], normals[b][2]);
-		glVertex3f(points[b][0], points[b][1], points[b][2]);
-		glNormal3f(normals[c][0], normals[c][1], normals[c][2]);
-		glVertex3f(points[c][0], points[c][1], points[c][2]);
+	for (int i = 0; i < (int)facets[seqNo].size(); i += 3){
+		int a = facets[seqNo][i];
+		int b = facets[seqNo][i + 1];
+		int c = facets[seqNo][i + 2];
+		glNormal3f(normals[seqNo][a][0], normals[seqNo][a][1], normals[seqNo][a][2]);
+		glVertex3f(points[seqNo][a][0], points[seqNo][a][1], points[seqNo][a][2]);
+		glNormal3f(normals[seqNo][b][0], normals[seqNo][b][1], normals[seqNo][b][2]);
+		glVertex3f(points[seqNo][b][0], points[seqNo][b][1], points[seqNo][b][2]);
+		glNormal3f(normals[seqNo][c][0], normals[seqNo][c][1], normals[seqNo][c][2]);
+		glVertex3f(points[seqNo][c][0], points[seqNo][c][1], points[seqNo][c][2]);
 	}
 	glEnd();
 }
@@ -89,14 +91,18 @@ void Model2Depth::RenderSence(){
 }
 
 bool Model2Depth::UpdateOnce(){
-	if (frmNo < cameras.size()){
-		Eigen::Matrix4f RT = cameras[frmNo].GetObjAbsTransformGL();
+	if (frmNo < cameras[seqNo].size() || seqNo < ParamParser::imgdirs.size() - 1){
+		if (frmNo >= cameras[seqNo].size()){
+			seqNo++;
+			frmNo = 0;
+		}
+		Eigen::Matrix4f RT = cameras[seqNo][frmNo].GetObjAbsTransformGL();
 		glMatrixMode(GL_MODELVIEW);
 		glLoadMatrixf(RT.data());
 
 		float left, right, bottom, top;
-		cameras[frmNo].GetFrustumGL(znear, left, right, bottom, top);
-		Eigen::Matrix4f projMatrix = cameras[frmNo].GetProjectGL(left, right, bottom, top, znear, zfar);
+		cameras[seqNo][frmNo].GetFrustumGL(znear, left, right, bottom, top);
+		Eigen::Matrix4f projMatrix = cameras[seqNo][frmNo].GetProjectGL(left, right, bottom, top, znear, zfar);
 		projMatrix.transposeInPlace();
 
 		glMatrixMode(GL_PROJECTION);
@@ -135,17 +141,17 @@ void Model2Depth::RenderDepth(){
 		}
 	}
 	
-	int iRet = CreateDir(path + "DATA/Render/");
+	int iRet = CreateDir(path[seqNo] + "DATA/Render/");
 	char fn[128];
-	sprintf_s(fn, "%sDATA/Render/_depth%d.jpg", path.c_str(), frmNo - 1);
+	sprintf_s(fn, "%sDATA/Render/_depth%d.jpg", path[seqNo].c_str(), frmNo - 1);
 	RenderDepthMap(fn, raw, w, h);
 
-	sprintf_s(fn, "%sDATA/Render/_depth%d.raw", path.c_str(), frmNo - 1);
+	sprintf_s(fn, "%sDATA/Render/_depth%d.raw", path[seqNo].c_str(), frmNo - 1);
 	std::cout << fn << std::endl;
 	SaveDepth(fn, raw);
 #if 1
-	sprintf_s(fn, "%sDATA/Render/pc%d.obj", path.c_str(), frmNo - 1);
-	p_d2m->SaveModel(raw, cameras[frmNo - 1], fn, true);
+	sprintf_s(fn, "%sDATA/Render/pc%d.obj", path[seqNo].c_str(), frmNo - 1);
+	p_d2m->SaveModel(raw, cameras[seqNo][frmNo - 1], fn, true);
 #endif
 }
 
@@ -159,16 +165,15 @@ void Model2Depth::Run(int argv, char *argc[]){
 	try{
 		glutInit(&argv, argc);
 		glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH);
-	
+
 		glutInitWindowPosition(500, 0);
 		std::cout << "run: " << w << " " << h << std::endl;
 		glutInitWindowSize(w, h);
 
 		int winid = glutCreateWindow("MultiViewStitch");
 
-		frmNo = 0;
-
 		InitGL();
+
 		glutReshapeFunc(Reshape);
 		glutDisplayFunc(RenderSence);
 		glutIdleFunc(IdleFunc);
